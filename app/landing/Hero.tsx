@@ -1,0 +1,41 @@
+import Spline from "@splinetool/react-spline";
+import { Button } from "../components/ui/button";
+import { lexendTera } from "../components/Fonts";
+
+const Hero = () => {
+  return (
+    <div className="relative min-h-screen w-full bg-black overflow-hidden overflow-x-hidden">
+      <Spline
+        scene="https://draft.spline.design/Tlb8LIb6EIRQVMTc/scene.splinecode"
+        className="absolute top-0 left-0 w-full h-full mt-15"
+      />
+      <div className="relative z-10 flex flex-col min-h-screen items-start justify-end px-16 py-24 text-white pointer-events-none">
+        <div className="max-w-3xl">
+          <h1 className={`text-6xl font-bold ${lexendTera.className}`}>
+            We&apos;re Building
+            <br />
+            <span className="text-glow">4D Privacy</span>
+          </h1>
+          <p className="mt-4 text-lg text-white/80">
+            Zk Privacy | Bulk Payments 
+          </p>
+        </div>
+        <div className="absolute bottom-24 right-16 text-right max-w-sm pointer-events-auto">
+          <p className="text-lg text-white/80">
+            Crafting Awesome Stories and Killer Designs to Make Brand Stand Out
+          </p>
+          <div className="flex gap-x-4 mt-8 justify-end">
+            <Button variant="outline" className="flex items-center gap-x-2">
+              Get Started
+              <span className="bg-blue-500 rounded-full h-6 w-6 flex items-center justify-center text-black">
+                +
+              </span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Hero;
