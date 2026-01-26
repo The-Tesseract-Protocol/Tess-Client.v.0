@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/kaushalchaudhari/Desktop/Tesseract-Client/tesseract-client/app/components/Hero.tsx"],"sourcesContent":["import Spline from '@splinetool/react-spline';\n\nconst Hero= () => {\n\n    return (\n        <div className=\"flex min-h-screen items-center justify-center  font-sans bg-black\">\n          <main className=\"mt-30 flex min-h-screen w-full max-w-full flex-col items-center justify-between  bg-black sm:items-start\">\n           <Spline scene=\"https://draft.spline.design/mb7Be7Qaijyowh1X/scene.splinecode\" />\n          </main>\n        </div>\n    );\n}\n\nexport default Hero;"],"names":[],"mappings":";;;;;AAAA;;;AAEA,MAAM,OAAM;IAER,qBACI,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC;YAAK,WAAU;sBACf,cAAA,8OAAC,qLAAM;gBAAC,OAAM;;;;;;;;;;;;;;;;AAIzB;uCAEe"}},
-    {"offset": {"line": 54, "column": 0}, "map": {"version":3,"sources":["file:///Users/kaushalchaudhari/Desktop/Tesseract-Client/tesseract-client/app/page.tsx"],"sourcesContent":["import Image from \"next/image\";\nimport Spline from '@splinetool/react-spline';\nimport Hero from \"./components/Hero\";\n\n\nexport default function Home() {\n  return (\n    <div className=\"flex min-h-screen items-center justify-center  font-sans bg-black\">\n      <Navbar />\n      <Hero />\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;;;AAGe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;;;;;0BACD,8OAAC,qIAAI;;;;;;;;;;;AAGX"}}]
-}

@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/kaushalchaudhari/Desktop/Tesseract-Client/tesseract-client/app/page.tsx"],"sourcesContent":["import Image from \"next/image\";\nimport Spline from '@splinetool/react-spline';\nimport Hero from \"./components/Hero\";\nimport Navbar from \"./components/Navbar\";\n\n\nexport default function Home() {\n  return (\n    <div className=\"flex min-h-screen items-center justify-center  font-sans bg-black\">\n      <Navbar />\n      <Hero />\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;;;;;;;;;;;;;AAMe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;;;;;0BACD,8OAAC;;;;;;;;;;;AAGP"}}]
-}
