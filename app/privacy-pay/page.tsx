@@ -179,25 +179,7 @@ function PrivacyPayContent() {
               </div>
 
               {/* Current Limits */}
-              <div className="bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
-                <h4 className="font-medium text-white/60 mb-4 text-sm uppercase tracking-wider">
-                  Testnet Limits
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-white/50">Min Deposit</span>
-                    <span className="text-white">1 USDC</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/50">Max Deposit</span>
-                    <span className="text-white">10,000 USDC</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white/50">Max Recipients</span>
-                    <span className="text-white">10</span>
-                  </div>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>

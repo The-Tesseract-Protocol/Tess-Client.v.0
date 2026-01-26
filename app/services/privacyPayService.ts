@@ -13,6 +13,7 @@ import {
   Contract,
   Networks,
 } from '@stellar/stellar-sdk';
+import nacl from 'tweetnacl';
 
 // ============================================================================
 // Configuration
@@ -369,23 +370,24 @@ async function encryptForDistributor(recipients: Record<string, string>): Promis
 }
 
 /**
- * NaCl box encryption using Web Crypto API
- * This is a simplified implementation for the relayer encryption
+ * NaCl box encryption for relayer
+ * Uses tweetnacl for proper authenticated encryption
  */
-async function encryptForRelayer(
+function encryptForRelayer(
   hashLN: string,
   totalAmount: number,
   encryptedD: string,
   senderPublicKeyBase64: string
-): Promise<string> {
+): string {
   const relayerPublicKeyBase64 = CONFIG.RELAYER_NACL_PUBLIC_KEY;
 
   if (!relayerPublicKeyBase64) {
     throw new Error('Relayer NaCl public key not configured');
   }
 
-  // For now, we'll use a simpler encryption approach
-  // In production, you'd want to use tweetnacl library
+  // Decode relayer's public key
+  const relayerPublicKey = decodeBase64(relayerPublicKeyBase64);
+
   const requestId = crypto.randomUUID();
   const timestamp = Date.now();
 
@@ -400,21 +402,31 @@ async function encryptForRelayer(
   };
 
   const innerPayloadStr = JSON.stringify(innerPayload);
+  const innerPayloadBytes = new TextEncoder().encode(innerPayloadStr);
 
-  // For testnet, we can send the payload with basic encoding
-  // The actual NaCl encryption would be done server-side or with tweetnacl
-  // This is a placeholder that sends the payload structure
-  const payloadBytes = new TextEncoder().encode(innerPayloadStr);
+  // Generate ephemeral keypair for this request
+  const ephemeralKeypair = nacl.box.keyPair();
 
-  // Simple XOR with relayer public key for basic obfuscation (not production-ready)
-  // In production, use tweetnacl library properly
-  const relayerKey = decodeBase64(relayerPublicKeyBase64);
-  const obfuscated = new Uint8Array(payloadBytes.length);
-  for (let i = 0; i < payloadBytes.length; i++) {
-    obfuscated[i] = payloadBytes[i] ^ relayerKey[i % relayerKey.length];
-  }
+  // Generate random nonce
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
 
-  return encodeBase64(obfuscated);
+  // Encrypt with NaCl box
+  const encryptedBox = nacl.box(
+    innerPayloadBytes,
+    nonce,
+    relayerPublicKey,
+    ephemeralKeypair.secretKey
+  );
+
+  // Construct wire format: [EphemeralPublicKey(32)] + [Nonce(24)] + [Ciphertext]
+  const wireFormat = new Uint8Array(
+    ephemeralKeypair.publicKey.length + nonce.length + encryptedBox.length
+  );
+  wireFormat.set(ephemeralKeypair.publicKey, 0);
+  wireFormat.set(nonce, ephemeralKeypair.publicKey.length);
+  wireFormat.set(encryptedBox, ephemeralKeypair.publicKey.length + nonce.length);
+
+  return encodeBase64(wireFormat);
 }
 
 /**
@@ -435,7 +447,7 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
 
     // Encrypt outer layer (for Relayer)
     const senderPublicKeyBase64 = encodeBase64(senderRawPublicKey);
-    const encryptedPayload = await encryptForRelayer(
+    const encryptedPayload = encryptForRelayer(
       hashLN,
       totalAmount,
       encryptedD,

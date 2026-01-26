@@ -21,7 +21,7 @@ export default function TransactionHistory() {
       setDeposits(getDeposits(address));
       setWithdrawals(getWithdrawals(address));
     }
-  }, [address]);
+  }, [address,deposits.length,withdrawals.length]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {

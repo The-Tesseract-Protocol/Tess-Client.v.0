@@ -297,7 +297,7 @@ export default function AuthTreeVisualization({
           <TreeNode
             label="Orchestrator"
             sublabel="orchestrate_payments()"
-            status={getNodeStatus(0, 0)}
+            status={getNodeStatus(0, 1)}
             isRoot
           />
 
