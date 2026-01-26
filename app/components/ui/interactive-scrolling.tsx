@@ -5,30 +5,30 @@ import { useLenis } from 'lenis/react';
 // --- Data for each slide ---
 const slidesData = [
   {
-    title: "Generate Code with AI",
-    description: "Describe your logic in plain English and watch as the AI generates clean, efficient code in seconds. From Python scripts to complex algorithms.",
-    image: "https://images.unsplash.com/photo-1564865878688-9a244444042a?q=80&w=2070&auto=format&fit=crop",
+    title: "Private Deposits",
+    description: "Deposit funds into the Treasury Vault using a unique cryptographic hash. Your identity is never stored – only you hold the key to access your funds.",
+    image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2070&auto=format&fit=crop",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
-    title: "Debug and Refactor Smarter",
-    description: "Paste your buggy code and let the AI identify errors, suggest improvements, and refactor for better readability and performance.",
-    image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=2070&auto=format&fit=crop",
+    title: "End-to-End Encryption",
+    description: "Withdrawal requests are encrypted in two layers – one for the relayer, one for the distributor. No single party can see your complete transaction details.",
+    image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=2070&auto=format&fit=crop",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
-    title: "Learn New Languages, Instantly",
-    description: "Translate code snippets between languages. Understand syntax and paradigms of a new language by seeing familiar code transformed.",
-    image: "https://images.unsplash.com/photo-1608306448197-e83633f1261c?q=80&w=1974&auto=format&fit=crop",
+    title: "Anonymous Distribution",
+    description: "Funds are distributed through our decentralized network. Recipients receive payments without any traceable link back to you – complete sender anonymity.",
+    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2070&auto=format&fit=crop",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
-    title: "Automate Your Workflow",
-    description: "From writing documentation to generating unit tests, let AI handle the repetitive tasks so you can focus on building great things.",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2070&auto=format&fit=crop",
+    title: "Bulk Payments",
+    description: "Pay up to 80 recipients with a single signature using our authorization tree technology. Perfect for payroll, airdrops, and mass distributions.",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
@@ -310,10 +310,10 @@ const ScrollingFeatureShowcase = () => {
               {/* Get Started Button */}
               <div className="absolute bottom-16 left-16">
                 <a
-                  href="#get-started"
+                  href="/dashboard"
                   className="px-10 py-4 bg-black text-white font-semibold rounded-full uppercase tracking-wider hover:bg-gray-800 transition-colors"
                 >
-                  Get Started
+                  Launch App
                 </a>
               </div>
             </div>

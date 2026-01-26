@@ -31,7 +31,7 @@ const Hero = () => {
         </div>
         <div className="absolute bottom-24 right-16 text-right max-w-sm pointer-events-auto">
           <p className="text-lg text-white/80">
-            Crafting Awesome Stories and Killer Designs to Make Brand Stand Out
+            Anonymous payments on Stellar. Your identity stays hidden, your funds move freely.
           </p>
           <div className="flex gap-x-4 mt-8 justify-end">
             <Button

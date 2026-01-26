@@ -9,10 +9,15 @@ const Navbar = () => {
         TESSERACT
         </a>
       </div>
-      <div className="backdrop-blur-md bg-black/40 rounded-3xl">
-        <a href="https://abhinavs-organization-10.gitbook.io/the-tesseract-protocol/" className="px-4 py-2">
+      <div className="flex items-center gap-4 backdrop-blur-md bg-black/40 rounded-3xl px-2 py-1">
+        <a href="https://abhinavs-organization-10.gitbook.io/the-tesseract-protocol/" className="px-2">
+          <Button variant="ghost" className="gap-2 text-white/70 hover:text-white">
+            Docs
+          </Button>
+        </a>
+        <a href="/dashboard">
           <Button variant="outline" className="gap-2">
-            Our Documentation
+            Launch App
           </Button>
         </a>
       </div>

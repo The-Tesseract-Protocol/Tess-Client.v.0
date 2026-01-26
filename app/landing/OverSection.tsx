@@ -13,15 +13,15 @@ export const OverviewSection = () => {
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/30" />
             <div className="pl-8">
               <h2 className="text-lg md:text-xl lg:text-xl font-bold text-white leading-tight mb-8">
-                <AnimatedHeadline text="Tesseract redefines how" delay={0} />
+                <AnimatedHeadline text="Break the link between" delay={0} />
                 <br />
-                <AnimatedHeadline text="the Internet uses data" delay={200} />
+                <AnimatedHeadline text="sender and receiver" delay={200} />
               </h2>
               <p className="text-white/80 text-sm md:text-md max-w-lg leading-relaxed">
-                Data is the world's most valuable and also its most sensitive resource. 
-                It powers all of our digital interactions, applications, and infrastructure. 
-                Until now, its value was inherently fragile – in most cases, to use it, 
-                its contents must be known.
+                Every blockchain transaction leaves a trail. Tesseract uses end-to-end
+                encryption and a unique identity system to make payments truly private.
+                Deposit funds, withdraw to anyone – no one can trace the connection,
+                not even us.
               </p>
             </div>
           </div>
