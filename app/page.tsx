@@ -10,7 +10,7 @@ import Footer from './landing/Footer';
 export default function Home() {
   return (
     <ReactLenis root>
-      <main className="bg-black">
+      <main className="bg-black overflow-x-hidden ">
         <Navbar />
         <Hero />
         <InvestorCarousel />

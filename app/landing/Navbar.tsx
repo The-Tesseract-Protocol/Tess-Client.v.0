@@ -10,7 +10,11 @@ const Navbar = () => {
         </a>
       </div>
       <div className="backdrop-blur-md bg-black/40 rounded-3xl">
-        <Button variant="outline">Let's Talk!</Button>
+        <a href="https://abhinavs-organization-10.gitbook.io/the-tesseract-protocol/" className="px-4 py-2">
+          <Button variant="outline" className="gap-2">
+            Our Documentation
+          </Button>
+        </a>
       </div>
     </nav>
   );
