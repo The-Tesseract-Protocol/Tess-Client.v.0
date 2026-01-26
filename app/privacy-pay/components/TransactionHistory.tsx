@@ -7,6 +7,8 @@ import {
   getWithdrawals,
   PrivacyPayDeposit,
   PrivacyPayWithdrawal,
+  checkJobStatuses,
+  updateWithdrawalTxHash,
 } from '@/app/services/privacyPayService';
 
 export default function TransactionHistory() {
@@ -22,6 +24,50 @@ export default function TransactionHistory() {
       setWithdrawals(getWithdrawals(address));
     }
   }, [address,deposits.length,withdrawals.length]);
+
+  // Poll for job statuses every 3 minutes
+  useEffect(() => {
+    if (!address) return;
+
+    const pollInterval = 3 * 60 * 1000; // 3 minutes
+
+    const pollJobs = async () => {
+      // Get pending withdrawals (those without txHash)
+      const pendingWithdrawals = withdrawals.filter(w => w.jobId && !w.txHash);
+      
+      if (pendingWithdrawals.length === 0) return;
+
+      const jobIds = pendingWithdrawals.map(w => w.jobId!);
+      
+      try {
+        const result = await checkJobStatuses(jobIds);
+        
+        // Update withdrawals with new txHashes
+        let updated = false;
+        result.jobs.forEach(job => {
+          if (job.txHash) {
+            updateWithdrawalTxHash(address, job.jobId, job.txHash);
+            updated = true;
+          }
+        });
+
+        // Refresh withdrawals if any were updated
+        if (updated) {
+          setWithdrawals(getWithdrawals(address));
+        }
+      } catch (error) {
+        console.error('Error polling job statuses:', error);
+      }
+    };
+
+    // Poll immediately on mount
+    pollJobs();
+
+    // Set up interval for polling
+    const interval = setInterval(pollJobs, pollInterval);
+    
+    return () => clearInterval(interval);
+  }, [address, withdrawals]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -164,9 +210,13 @@ export default function TransactionHistory() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
+                    {withdrawal.txHash ? (
+                      <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <div className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                    )}
                   </div>
                   <div>
                     <p className="text-white font-medium">{withdrawal.totalAmount} USDC</p>
@@ -175,10 +225,10 @@ export default function TransactionHistory() {
                 </div>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                    withdrawal.status
+                    withdrawal.txHash ? 'completed' : 'pending'
                   )}`}
                 >
-                  {withdrawal.status}
+                  {withdrawal.txHash ? 'completed' : 'pending'}
                 </span>
               </div>
 
@@ -189,12 +239,38 @@ export default function TransactionHistory() {
                     {Object.keys(withdrawal.recipients).length}
                   </span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-white/40">Request ID</span>
-                  <code className="text-white/60 font-mono text-xs">
-                    {withdrawal.requestId.slice(0, 8)}...
-                  </code>
-                </div>
+                {withdrawal.jobId && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40">Job ID</span>
+                    <code className="text-white/60 font-mono text-xs">
+                      {withdrawal.jobId.slice(0, 8)}...
+                    </code>
+                  </div>
+                )}
+                {withdrawal.txHash ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40">Transaction</span>
+                    <a
+                      href={`https://stellar.expert/explorer/testnet/tx/${withdrawal.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-400 hover:text-purple-300 font-mono text-xs flex items-center gap-1"
+                    >
+                      {withdrawal.txHash.slice(0, 8)}...
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40">Status</span>
+                    <span className="text-yellow-400 text-xs flex items-center gap-2">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+                      Processing...
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           ))}

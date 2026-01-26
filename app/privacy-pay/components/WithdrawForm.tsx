@@ -204,14 +204,16 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         setRequestId(result.requestId);
         setStatus('success');
 
-        // Save withdrawal to session
+        // Save withdrawal to session with jobId
         saveWithdrawal(address, {
           requestId: result.requestId,
+          jobId: result.jobId,
           hashLN,
           totalAmount: getTotalAmount(),
           recipients: recipientsMap,
           timestamp: Date.now(),
           status: 'pending',
+          senderIdentity: result.senderIdentity,
         });
 
         onSuccess?.(result.requestId);

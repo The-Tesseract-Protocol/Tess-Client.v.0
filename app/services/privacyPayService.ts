@@ -60,6 +60,8 @@ export interface WithdrawParams {
 export interface WithdrawResult {
   success: boolean;
   requestId?: string;
+  jobId?: string;
+  senderIdentity?: string;
   error?: string;
 }
 
@@ -74,11 +76,14 @@ export interface PrivacyPayDeposit {
 
 export interface PrivacyPayWithdrawal {
   requestId: string;
+  jobId?: string;
   hashLN: string;
   totalAmount: number;
   recipients: Record<string, string>;
   timestamp: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
+  txHash?: string;
+  senderIdentity?: string;
 }
 
 export interface PrivacyPaySession {
@@ -476,13 +481,56 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
 
     return {
       success: true,
-      requestId: responseData.requestId,
+      requestId: responseData.requestId || responseData.jobId, // Use jobId as requestId if requestId not provided
+      jobId: responseData.jobId,
+      senderIdentity: responseData.senderIdentity,
     };
   } catch (error: any) {
     return {
       success: false,
       error: error.message,
     };
+  }
+}
+
+/**
+ * Check job statuses from the Relayer
+ */
+export async function checkJobStatuses(jobIds: string[]): Promise<{
+  jobs: Array<{
+    jobId: string;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    txHash?: string;
+  }>;
+}> {
+  try {
+    // Get all statuses (API doesn't support filtering by jobIds)
+    const response = await fetch(`${CONFIG.RELAYER_URL}/status`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to check job statuses: ${response.status}`);
+    }
+
+    const allJobs = await response.json();
+    
+    // Filter and transform the jobs to match our expected format
+    const matchingJobs = allJobs
+      .filter((job: any) => jobIds.includes(job._id))
+      .map((job: any) => ({
+        jobId: job._id,
+        status: job.status === 'SUCCESS' ? 'completed' as const : 
+                job.status === 'PENDING' ? 'pending' as const :
+                job.status === 'PROCESSING' ? 'processing' as const : 'failed' as const,
+        txHash: job.stellarTransactionHash,
+      }));
+
+    return { jobs: matchingJobs };
+  } catch (error: any) {
+    console.error('Error checking job statuses:', error);
+    return { jobs: [] };
   }
 }
 
@@ -598,6 +646,25 @@ export function updateWithdrawalStatus(
   const session = getSession(walletAddress);
   if (session.withdrawals[requestId]) {
     session.withdrawals[requestId].status = status;
+    saveSession(session);
+  }
+}
+
+/**
+ * Update withdrawal txHash by jobId
+ */
+export function updateWithdrawalTxHash(
+  walletAddress: string,
+  jobId: string,
+  txHash: string
+): void {
+  const session = getSession(walletAddress);
+  const withdrawal = Object.values(session.withdrawals).find(w => w.jobId === jobId);
+  
+  if (withdrawal) {
+    withdrawal.txHash = txHash;
+    withdrawal.status = 'completed';
+    session.withdrawals[withdrawal.requestId] = withdrawal;
     saveSession(session);
   }
 }
