@@ -11,7 +11,7 @@ const Navbar = () => {
       </div>
       <div className="flex items-center gap-4 backdrop-blur-md bg-black/40 rounded-3xl px-2 py-1">
         <a href="https://abhinavs-organization-10.gitbook.io/the-tesseract-protocol/" className="px-2">
-          <Button variant="ghost" className="gap-2 text-white/70 hover:text-white">
+          <Button variant="default" className="gap-2 text-white/70 hover:text-white">
             Docs
           </Button>
         </a>

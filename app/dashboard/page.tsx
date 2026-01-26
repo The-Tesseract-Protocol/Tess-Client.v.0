@@ -21,7 +21,7 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="min-h-screen flex flex-col items-center justify-center px-8">
         <div className="text-center mb-16">
-          <h1 className={`text-5xl font-bold mb-4 ${lexendTera.className}`}>
+          <h1 className={`text-5xl font-bold mb-4 font-inter`}>
             Choose Your Path
           </h1>
           <p className="text-white/60 text-lg max-w-lg mx-auto">
