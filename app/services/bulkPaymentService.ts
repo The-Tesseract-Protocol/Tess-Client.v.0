@@ -473,6 +473,28 @@ export class BulkPaymentService {
         };
     }
 
+
+    /**
+     * Checks if a Stellar account exists on the network.
+     * @param publicKey The public key of the account to check.
+     * @returns An object indicating if the account exists and an error message if not.
+     */
+    async checkAccountExists(publicKey: string): Promise<{ exists: boolean; error?: string }> {
+        try {
+            await this.server.getAccount(publicKey);
+            return { exists: true };
+        } catch (e: any) {
+            if (e.message?.includes('Not Found') || e.code === 404) {
+                return {
+                    exists: false,
+                    error: `Account ${publicKey} does not exist on the network. Please fund it first.`
+                };
+            }
+            // Re-throw or return a generic error if it's not a "Not Found" issue
+            return { exists: false, error: e.message || 'An unknown error occurred while checking account existence.' };
+        }
+    }
+
     // ==================== UTILITY METHODS ====================
 
     /**

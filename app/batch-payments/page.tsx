@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { lexendTera } from '../components/Fonts';
 import RecipientsInput, { Recipient } from './components/RecipientsInput';
@@ -30,6 +30,14 @@ function BatchPaymentsContent() {
         message: 'Ready to process payments',
     });
 
+    // NEW: Track if visualization animation has completed
+    const [isVisualizationComplete, setIsVisualizationComplete] = useState(false);
+
+    // Callback when visualization finishes its completion animation
+    const handleVisualizationComplete = useCallback(() => {
+        setIsVisualizationComplete(true);
+    }, []);
+
     // Compute valid recipients and batches
     const validRecipients = useMemo(() => recipients.filter((r) => r.isValid), [recipients]);
 
@@ -53,6 +61,9 @@ function BatchPaymentsContent() {
 
     // Execute batch payment
     const executeBatchPayment = async () => {
+        // Reset visualization state for new transaction
+        setIsVisualizationComplete(false);
+
         if (validRecipients.length === 0) {
             setTxStatus({
                 state: 'error',
@@ -86,6 +97,30 @@ function BatchPaymentsContent() {
 
             // Initialize the bulk payment service
             const bulkPaymentService = new BulkPaymentService('testnet');
+
+            // Check if user account exists
+            const accountCheck = await bulkPaymentService.checkAccountExists(walletState.address);
+            if (!accountCheck.exists) {
+                setTxStatus({
+                    state: 'error',
+                    message: 'Account not funded',
+                    error: (
+                        <span>
+                            Your wallet address does not exist on Stellar Testnet. Please fund it using the Stellar{' '}
+                            <a
+                                href={`https://friendbot.stellar.org?addr=${walletState.address}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline hover:text-blue-300"
+                            >
+                                Friendbot
+                            </a>
+                            .
+                        </span>
+                    ),
+                });
+                return;
+            }
 
             // Convert recipients to PaymentRecipient format
             const paymentRecipients: PaymentRecipient[] = validRecipients.map((r) => ({
@@ -199,9 +234,17 @@ function BatchPaymentsContent() {
     // Reset transaction
     const resetTransaction = () => {
         setTxStatus({ state: 'idle', message: 'Ready to process payments' });
+        setIsVisualizationComplete(false);
     };
 
-    const isProcessing = ['preparing', 'signing', 'submitting'].includes(txStatus.state);
+    // Determine if actively processing (transaction in progress OR waiting for visualization to complete)
+    const isTransactionInProgress = ['preparing', 'signing', 'submitting'].includes(txStatus.state);
+
+    // Button shows loading until BOTH transaction completes AND visualization animation finishes
+    // This ensures synchronized completion experience
+    const isProcessing = isTransactionInProgress ||
+        (txStatus.state === 'success' && !isVisualizationComplete);
+
     const canSubmit = validRecipients.length > 0 && walletState.isConnected && !isProcessing;
 
     return (
@@ -338,7 +381,9 @@ function BatchPaymentsContent() {
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    {txStatus.message}
+                                    {txStatus.state === 'success' && !isVisualizationComplete
+                                        ? 'Completing...'
+                                        : txStatus.message}
                                 </span>
                             ) : !walletState.isConnected ? (
                                 'Connect Wallet to Continue'
@@ -417,9 +462,11 @@ function BatchPaymentsContent() {
                     <div className="space-y-6">
                         <AuthTreeVisualization
                             batches={batchInfo}
-                            isProcessing={isProcessing}
+                            isProcessing={isTransactionInProgress}
                             isComplete={txStatus.state === 'success'}
                             transactionHash={txStatus.hash}
+                            transactionState={txStatus.state}
+                            onVisualizationComplete={handleVisualizationComplete}
                         />
 
                         {/* How It Works */}
