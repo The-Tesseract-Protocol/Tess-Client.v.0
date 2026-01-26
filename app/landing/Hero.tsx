@@ -1,8 +1,17 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
 import Spline from "@splinetool/react-spline";
 import { Button } from "../components/ui/button";
 import { lexendTera } from "../components/Fonts";
 
 const Hero = () => {
+  const router = useRouter();
+
+  const handleGetStarted = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-black overflow-hidden overflow-x-hidden">
       <Spline
@@ -17,7 +26,7 @@ const Hero = () => {
             <span className="text-glow">4D Privacy</span>
           </h1>
           <p className="mt-4 text-lg text-white/80">
-            Zk Privacy | Bulk Payments 
+            Zk Privacy | Bulk Payments
           </p>
         </div>
         <div className="absolute bottom-24 right-16 text-right max-w-sm pointer-events-auto">
@@ -25,7 +34,11 @@ const Hero = () => {
             Crafting Awesome Stories and Killer Designs to Make Brand Stand Out
           </p>
           <div className="flex gap-x-4 mt-8 justify-end">
-            <Button variant="outline" className="flex items-center gap-x-2">
+            <Button
+              variant="outline"
+              className="flex items-center gap-x-2"
+              onClick={handleGetStarted}
+            >
               Get Started
               <span className="bg-blue-500 rounded-full h-6 w-6 flex items-center justify-center text-black">
                 +

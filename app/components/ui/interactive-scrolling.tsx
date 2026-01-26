@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef, SyntheticEvent } from 'react';
+import { useLenis } from 'lenis/react';
 
 // --- Data for each slide ---
 const slidesData = [
@@ -37,12 +38,30 @@ const slidesData = [
 const ScrollingFeatureShowcase = () => {
   // State to track the currently active slide index
   const [activeIndex, setActiveIndex] = useState(0);
+  // State to track if scroll should be locked (for internal scrolling)
+  const [isScrollLocked, setIsScrollLocked] = useState(false);
+  // Ref to the main section element
+  const sectionRef = useRef<HTMLElement>(null);
   // Ref to the main scrollable container
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   // Ref to the sticky content panel
   const stickyPanelRef = useRef<HTMLDivElement>(null);
 
-  // --- Scroll Handler ---
+  // Access Lenis instance to stop/start smooth scrolling
+  const lenis = useLenis();
+
+  // --- Stop/Start Lenis based on scroll lock state ---
+  useEffect(() => {
+    if (!lenis) return;
+
+    if (isScrollLocked) {
+      lenis.stop();
+    } else {
+      lenis.start();
+    }
+  }, [isScrollLocked, lenis]);
+
+  // --- Scroll Handler for internal container (updates active slide index) ---
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -58,7 +77,159 @@ const ScrollingFeatureShowcase = () => {
     };
 
     container.addEventListener('scroll', handleScroll);
+    // Initial check
+    handleScroll();
     return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // --- SCROLL LOCK: Handle internal scroll when section is at top ---
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    const section = sectionRef.current;
+    if (!container || !section) return;
+
+    // Calculate the scroll position where section should lock
+    const getSectionLockPosition = () => {
+      const rect = section.getBoundingClientRect();
+      return window.scrollY + rect.top;
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const rect = section.getBoundingClientRect();
+      const scrollableHeight = container.scrollHeight - window.innerHeight;
+      const isAtEnd = container.scrollTop >= scrollableHeight - 10;
+      const isAtStart = container.scrollTop <= 5;
+
+      // Section is "locked" when its top is at or very near viewport top (sticky kicks in)
+      // Use wider tolerance to catch when sticky is active
+      const isLockedAtTop = rect.top <= 10 && rect.top >= -10;
+
+      // Section is approaching but not yet at top - let user scroll naturally
+      const isApproachingFromAbove = rect.top > 10 && rect.top < window.innerHeight;
+
+      // Section has been scrolled past (user scrolled too fast) - need to snap back
+      const hasScrolledPast = rect.top < -10 && rect.bottom > 0;
+
+      // SCROLLING DOWN
+      if (e.deltaY > 0) {
+        // Section is approaching - let Lenis scroll naturally (NO INSTANT SNAP)
+        if (isApproachingFromAbove) {
+          // Don't intercept - let natural scroll bring it to top
+          setIsScrollLocked(false);
+          return;
+        }
+
+        // Section is locked at top - handle internal scroll
+        if (isLockedAtTop && !isAtEnd) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsScrollLocked(true);
+          container.scrollTop += e.deltaY;
+          return;
+        }
+
+        // Section has been scrolled past but internal scroll not complete - snap back smoothly
+        if (hasScrolledPast && !isAtEnd) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsScrollLocked(true);
+          const lockPos = getSectionLockPosition();
+          window.scrollTo({ top: lockPos, behavior: 'smooth' });
+          container.scrollTop += Math.abs(e.deltaY);
+          return;
+        }
+
+        // At end of internal scroll - allow page to continue
+        if (isAtEnd) {
+          setIsScrollLocked(false);
+          return;
+        }
+      }
+
+      // SCROLLING UP
+      if (e.deltaY < 0) {
+        // Section is locked - handle internal scroll if not at start
+        if (isLockedAtTop && !isAtStart) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsScrollLocked(true);
+          container.scrollTop += e.deltaY;
+          return;
+        }
+
+        // Section has been scrolled past - snap back smoothly and handle internal scroll
+        if (hasScrolledPast && !isAtStart) {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsScrollLocked(true);
+          const lockPos = getSectionLockPosition();
+          window.scrollTo({ top: lockPos, behavior: 'smooth' });
+          container.scrollTop += e.deltaY;
+          return;
+        }
+
+        // At start of internal scroll - allow page to scroll back up
+        if (isAtStart || isLockedAtTop) {
+          setIsScrollLocked(false);
+          return;
+        }
+      }
+    };
+
+    // Handle touch events for mobile
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touchY = e.touches[0].clientY;
+      const deltaY = touchStartY - touchY;
+      touchStartY = touchY;
+
+      const rect = section.getBoundingClientRect();
+      const scrollableHeight = container.scrollHeight - window.innerHeight;
+      const isAtEnd = container.scrollTop >= scrollableHeight - 10;
+      const isAtStart = container.scrollTop <= 5;
+      const isLockedAtTop = rect.top <= 10 && rect.top >= -10;
+      const isApproachingFromAbove = rect.top > 10 && rect.top < window.innerHeight;
+
+      // Section approaching - let natural scroll continue
+      if (isApproachingFromAbove && deltaY > 0) {
+        setIsScrollLocked(false);
+        return;
+      }
+
+      // Scrolling down, section locked, not at end
+      if (deltaY > 0 && isLockedAtTop && !isAtEnd) {
+        e.preventDefault();
+        setIsScrollLocked(true);
+        container.scrollTop += Math.abs(deltaY);
+        return;
+      }
+
+      // Scrolling up, section locked, not at start
+      if (deltaY < 0 && isLockedAtTop && !isAtStart) {
+        e.preventDefault();
+        setIsScrollLocked(true);
+        container.scrollTop += deltaY;
+        return;
+      }
+
+      // At boundaries - unlock
+      setIsScrollLocked(false);
+    };
+
+    // Use capture phase to intercept before Lenis
+    window.addEventListener('wheel', handleWheel, { passive: false, capture: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel, { capture: true });
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
   }, []);
   
   // Dynamic styles for the background and text color transitions
@@ -69,26 +240,33 @@ const ScrollingFeatureShowcase = () => {
   };
 
   // Styles for the grid pattern on the right side
-  const gridPatternStyle: React.CSSProperties = {
+  const gridPatternStyle = {
     '--grid-color': 'rgba(0, 0, 0, 0.12)',
     backgroundImage: `
       linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
       linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px)
     `,
     backgroundSize: '3.5rem 3.5rem',
-  };
+  } as React.CSSProperties;
 
   return (
-    <section className="h-screen relative w-full sticky top-0 rounded-tr-2xl rounded-tl-2xl ">
+      <section
+        ref={sectionRef}
+        className="h-screen relative w-full sticky top-0 rounded-tr-2xl rounded-tl-2xl "
+      >
       <div
         ref={scrollContainerRef}
         className="h-full w-full overflow-y-auto"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
-        data-lenis-prevent
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        } as React.CSSProperties}
+        // Prevent Lenis from interfering when we're handling internal scroll
+        {...(isScrollLocked ? { 'data-lenis-prevent': true } : {})}
       >
         <div style={{ height: `${slidesData.length * 100}vh` }}>
         <div ref={stickyPanelRef} className="sticky top-0 h-screen w-full flex flex-col items-center justify-center" style={dynamicStyles}>
-          <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full max-w-8xl mx-auto">
             
             {/* Left Column: Text Content, Pagination & Button */}
             <div className="relative flex flex-col justify-center p-8 md:p-16 border-r border-black/10">
@@ -142,7 +320,7 @@ const ScrollingFeatureShowcase = () => {
 
             {/* Right Column: Image Content with Grid Background */}
             <div className="hidden md:flex items-center justify-center p-8" style={gridPatternStyle}>
-              <div className="relative w-[50%] h-[80vh] rounded-2xl overflow-hidden shadow-2xl border-4 border-black/5">
+              <div className="relative w-[100%] h-[80vh] rounded-2xl overflow-hidden shadow-2xl border-4 border-black/5">
                 <div 
                   className="absolute top-0 left-0 w-full h-full transition-transform duration-700 ease-in-out"
                   style={{ transform: `translateY(-${activeIndex * 100}%)` }}

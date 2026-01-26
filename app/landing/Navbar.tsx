@@ -6,7 +6,7 @@ const Navbar = () => {
       <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden  ">
         <a href="#" className="text-white/80 hover:text-white transition-colors mr-2">
         <img src="/Tess_BW.svg" alt="Tesseract Logo" className="h-8 w-8  mr-1 inline-block rounded-2xl" />
-TESSERACT
+        TESSERACT
         </a>
       </div>
       <div className="backdrop-blur-md bg-black/40 rounded-3xl">

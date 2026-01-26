@@ -1,6 +1,6 @@
 const Footer =() =>{
     return (
-        <div className="bg-black text-white p-8 min-h-screen flex flex-col items-center justify-center">
+        <div className="bg-black text-white text-[15.5rem] p-8 min-h-screen flex flex-col items-end justify-center">
             TESSERACT
         </div>
     )

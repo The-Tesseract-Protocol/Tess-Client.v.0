@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 
 interface AuthTreeNode {
   id: string;
@@ -10,6 +10,9 @@ interface AuthTreeNode {
   status: 'pending' | 'active' | 'complete';
 }
 
+// Transaction state type matching the parent component
+type TransactionState = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
+
 interface AuthTreeVisualizationProps {
   batches: {
     workerIndex: number;
@@ -18,22 +21,39 @@ interface AuthTreeVisualizationProps {
   isProcessing: boolean;
   isComplete: boolean;
   transactionHash?: string;
+  // NEW: Actual transaction state for proper synchronization
+  transactionState?: TransactionState;
+  // NEW: Callback when visualization completes its animation
+  onVisualizationComplete?: () => void;
 }
 
-const ANIMATION_DURATION_MS = 15000; // Base animation duration
-const MIN_EXTENSION_MS = 3000; // Minimum extra time if success comes early
+// Completion animation duration (when transaction finishes, how long to animate to 100%)
+const COMPLETION_ANIMATION_MS = 2000;
+// Minimum progress per phase to show meaningful animation
+const MIN_PHASE_DURATION_MS = 800;
+
+// Easing function for smooth animations
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3);
+}
 
 export default function AuthTreeVisualization({
   batches,
   isProcessing,
   isComplete,
   transactionHash,
+  transactionState = 'idle',
+  onVisualizationComplete,
 }: AuthTreeVisualizationProps) {
   const [animationProgress, setAnimationProgress] = useState(0);
   const [currentPhase, setCurrentPhase] = useState<'idle' | 'building' | 'signing' | 'submitting' | 'complete'>('idle');
+  const [isVisualizationComplete, setIsVisualizationComplete] = useState(false);
+
   const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number | null>(null);
-  const successTimeRef = useRef<number | null>(null);
+  const phaseStartTimeRef = useRef<number | null>(null);
+  const completionStartTimeRef = useRef<number | null>(null);
+  const progressAtCompletionRef = useRef<number>(0);
+  const lastPhaseRef = useRef<TransactionState>('idle');
 
   // Build the tree structure
   const buildTree = (): AuthTreeNode => {
@@ -66,47 +86,127 @@ export default function AuthTreeVisualization({
   const tree = buildTree();
   const totalNodes = 1 + batches.length + batches.reduce((sum, b) => sum + b.recipientCount, 0);
 
-  // Animation logic
-  useEffect(() => {
-    if (isProcessing && !startTimeRef.current) {
-      startTimeRef.current = Date.now();
+  // Map transaction state to target progress ranges
+  const getTargetProgressForState = useCallback((state: TransactionState): { min: number; max: number } => {
+    switch (state) {
+      case 'preparing':
+        return { min: 0, max: 0.30 }; // 0-30%
+      case 'signing':
+        return { min: 0.30, max: 0.50 }; // 30-50%
+      case 'submitting':
+        return { min: 0.50, max: 0.85 }; // 50-85%
+      case 'success':
+        return { min: 0.85, max: 1.0 }; // 85-100%
+      default:
+        return { min: 0, max: 0 };
+    }
+  }, []);
+
+  // Animate within a phase - smoothly animate toward the phase's max progress
+  const animateWithinPhase = useCallback(() => {
+    if (!phaseStartTimeRef.current) return;
+
+    const elapsed = Date.now() - phaseStartTimeRef.current;
+    const target = getTargetProgressForState(transactionState);
+
+    // Animate toward the max of current phase over MIN_PHASE_DURATION_MS
+    // But cap at 90% of the phase max to leave room for next phase transition
+    const phaseProgress = Math.min(elapsed / MIN_PHASE_DURATION_MS, 1);
+    const cappedMax = target.min + (target.max - target.min) * 0.9;
+    const newProgress = target.min + (cappedMax - target.min) * easeOutCubic(phaseProgress);
+
+    setAnimationProgress(prev => Math.max(prev, newProgress));
+
+    // Update visual phase
+    if (newProgress < 0.30) {
       setCurrentPhase('building');
+    } else if (newProgress < 0.50) {
+      setCurrentPhase('signing');
+    } else if (newProgress < 0.85) {
+      setCurrentPhase('submitting');
+    }
 
-      const animate = () => {
-        const now = Date.now();
-        const elapsed = now - (startTimeRef.current || now);
-        let duration = ANIMATION_DURATION_MS;
+    // Keep animating if we haven't reached the cap and transaction is still in this phase
+    if (phaseProgress < 1 && !isComplete) {
+      animationRef.current = requestAnimationFrame(animateWithinPhase);
+    }
+  }, [transactionState, isComplete, getTargetProgressForState]);
 
-        // If we got success early, extend the animation gracefully
-        if (successTimeRef.current) {
-          const timeAtSuccess = successTimeRef.current - (startTimeRef.current || now);
-          const remainingAtSuccess = 1 - (timeAtSuccess / ANIMATION_DURATION_MS);
-          if (remainingAtSuccess > 0.1) {
-            // Extend to finish smoothly
-            duration = timeAtSuccess + MIN_EXTENSION_MS + (remainingAtSuccess * MIN_EXTENSION_MS);
-          }
-        }
+  // Completion animation - smoothly animate from current progress to 100%
+  const animateToCompletion = useCallback(() => {
+    if (!completionStartTimeRef.current) return;
 
-        const progress = Math.min(elapsed / duration, 1);
-        setAnimationProgress(progress);
+    const elapsed = Date.now() - completionStartTimeRef.current;
+    const progress = Math.min(elapsed / COMPLETION_ANIMATION_MS, 1);
 
-        // Update phases
-        if (progress < 0.3) {
-          setCurrentPhase('building');
-        } else if (progress < 0.5) {
-          setCurrentPhase('signing');
-        } else if (progress < 0.95) {
-          setCurrentPhase('submitting');
-        } else {
-          setCurrentPhase('complete');
-        }
+    // Ease out from current progress to 100%
+    const startProgress = progressAtCompletionRef.current;
+    const newProgress = startProgress + (1 - startProgress) * easeOutCubic(progress);
 
-        if (progress < 1) {
-          animationRef.current = requestAnimationFrame(animate);
-        }
-      };
+    setAnimationProgress(newProgress);
 
-      animationRef.current = requestAnimationFrame(animate);
+    // Update visual phase based on progress
+    if (newProgress < 0.95) {
+      setCurrentPhase('submitting');
+    } else {
+      setCurrentPhase('complete');
+    }
+
+    if (progress < 1) {
+      animationRef.current = requestAnimationFrame(animateToCompletion);
+    } else {
+      // Animation fully complete
+      setIsVisualizationComplete(true);
+      onVisualizationComplete?.();
+    }
+  }, [onVisualizationComplete]);
+
+  // Handle transaction state changes
+  useEffect(() => {
+    // Cancel any existing animation
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
+    }
+
+    // Handle state transitions
+    if (transactionState !== lastPhaseRef.current) {
+      lastPhaseRef.current = transactionState;
+
+      if (transactionState === 'preparing') {
+        // Start fresh
+        phaseStartTimeRef.current = Date.now();
+        setCurrentPhase('building');
+        animationRef.current = requestAnimationFrame(animateWithinPhase);
+      } else if (transactionState === 'signing') {
+        phaseStartTimeRef.current = Date.now();
+        setCurrentPhase('signing');
+        // Jump to signing min if we're behind
+        setAnimationProgress(prev => Math.max(prev, 0.30));
+        animationRef.current = requestAnimationFrame(animateWithinPhase);
+      } else if (transactionState === 'submitting') {
+        phaseStartTimeRef.current = Date.now();
+        setCurrentPhase('submitting');
+        // Jump to submitting min if we're behind
+        setAnimationProgress(prev => Math.max(prev, 0.50));
+        animationRef.current = requestAnimationFrame(animateWithinPhase);
+      } else if (transactionState === 'success') {
+        // Transaction complete! Start completion animation
+        progressAtCompletionRef.current = animationProgress;
+        completionStartTimeRef.current = Date.now();
+        animationRef.current = requestAnimationFrame(animateToCompletion);
+      } else if (transactionState === 'error') {
+        // Stop animation on error
+        setCurrentPhase('idle');
+      } else if (transactionState === 'idle') {
+        // Reset everything
+        phaseStartTimeRef.current = null;
+        completionStartTimeRef.current = null;
+        progressAtCompletionRef.current = 0;
+        setAnimationProgress(0);
+        setCurrentPhase('idle');
+        setIsVisualizationComplete(false);
+      }
     }
 
     return () => {
@@ -114,27 +214,37 @@ export default function AuthTreeVisualization({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isProcessing]);
+  }, [transactionState, animateWithinPhase, animateToCompletion, animationProgress]);
 
-  // Handle early success
+  // Fallback: Handle isComplete prop if transactionState isn't being passed
   useEffect(() => {
-    if (isComplete && !successTimeRef.current) {
-      successTimeRef.current = Date.now();
+    if (isComplete && transactionState !== 'success' && !completionStartTimeRef.current) {
+      // Fallback for legacy usage without transactionState
+      progressAtCompletionRef.current = animationProgress;
+      completionStartTimeRef.current = Date.now();
+      animationRef.current = requestAnimationFrame(animateToCompletion);
     }
-  }, [isComplete]);
+  }, [isComplete, transactionState, animationProgress, animateToCompletion]);
 
-  // Reset on new processing
+  // Reset on new processing (when idle and not complete)
   useEffect(() => {
-    if (!isProcessing && !isComplete) {
-      startTimeRef.current = null;
-      successTimeRef.current = null;
+    if (!isProcessing && !isComplete && transactionState === 'idle') {
+      phaseStartTimeRef.current = null;
+      completionStartTimeRef.current = null;
+      progressAtCompletionRef.current = 0;
       setAnimationProgress(0);
       setCurrentPhase('idle');
+      setIsVisualizationComplete(false);
     }
-  }, [isProcessing, isComplete]);
+  }, [isProcessing, isComplete, transactionState]);
 
   // Calculate node status based on progress
-  const getNodeStatus = (nodeIndex: number, totalBeforeNode: number): 'pending' | 'active' | 'complete' => {
+  const getNodeStatus = (_nodeIndex: number, totalBeforeNode: number): 'pending' | 'active' | 'complete' => {
+    // If visualization is complete, all nodes are complete
+    if (isVisualizationComplete || animationProgress >= 0.99) {
+      return 'complete';
+    }
+
     const nodeProgress = totalBeforeNode / totalNodes;
     if (animationProgress >= nodeProgress + (1 / totalNodes)) {
       return 'complete';
