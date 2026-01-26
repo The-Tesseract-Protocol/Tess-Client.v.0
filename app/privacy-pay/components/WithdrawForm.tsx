@@ -142,7 +142,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       {/* HashLN Input/Selection */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">
-          Deposit Hash (hashLN)
+          Select Deposit  
         </label>
         {userDeposits.length > 0 ? (
           <select
@@ -170,19 +170,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 font-mono text-sm"
           />
         )}
-        <p className="mt-2 text-xs text-white/40">
-          You can also paste a hash manually if you have one saved
-        </p>
-        {userDeposits.length > 0 && (
-          <input
-            type="text"
-            value={hashLN}
-            onChange={(e) => setHashLN(e.target.value)}
-            placeholder="Or paste hash manually"
-            disabled={isProcessing}
-            className="mt-2 w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 font-mono text-sm"
-          />
-        )}
+       
       </div>
 
       {/* Recipients */}
