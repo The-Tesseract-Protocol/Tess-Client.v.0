@@ -373,6 +373,11 @@ export class BulkPaymentService {
         const serviceKeypair = Keypair.fromSecret(serviceSecretKey);
         const serviceAddress = serviceKeypair.publicKey();
 
+        console.log('=== Submit Transaction Debug ===');
+        console.log('Service address:', serviceAddress);
+        console.log('Orchestrator contract:', this.orchestratorContract);
+        console.log('XLM SAC:', this.xlmSac);
+
         // Load service account
         let serviceAccount: Account;
         try {
@@ -410,9 +415,17 @@ export class BulkPaymentService {
         const simResponse = await this.server.simulateTransaction(simTx);
 
         if (rpc.Api.isSimulationError(simResponse)) {
+            // Extract more detailed error info
+            console.error('=== Simulation Error ===');
+            console.error('Error:', simResponse.error);
+            console.error('Full response:', JSON.stringify(simResponse, null, 2));
+            
+            // Try to extract more specific error info
+            let errorMessage = simResponse.error || 'Unknown simulation error';
+            
             return {
                 success: false,
-                error: `Simulation failed: ${simResponse.error}`,
+                error: `Simulation failed: ${errorMessage}`,
             };
         }
 

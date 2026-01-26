@@ -90,19 +90,20 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Privacy Pay Card - Coming Soon */}
-          <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/20 backdrop-blur-lg p-8 text-left opacity-60 cursor-not-allowed">
-            {/* Coming Soon Badge */}
-            <div className="absolute top-4 right-4">
-              <span className="px-3 py-1 text-xs font-medium bg-white/10 rounded-full text-white/60">
-                Coming Soon
-              </span>
+          {/* Privacy Pay Card - Active */}
+          <button
+            onClick={() => router.push('/privacy-pay')}
+            className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 backdrop-blur-lg p-8 text-left transition-all duration-300 hover:border-white/40 hover:bg-white/5"
+          >
+            {/* Glow effect */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10" />
             </div>
 
             {/* Icon */}
             <div className="relative mb-6">
-              <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center">
-                <svg className="w-8 h-8 text-white/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="w-16 h-16 rounded-xl bg-white/10 flex items-center justify-center">
+                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
@@ -113,33 +114,40 @@ export default function Dashboard() {
               <h2 className={`text-2xl font-semibold mb-3 ${lexendTera.className}`}>
                 Privacy Pay
               </h2>
-              <p className="text-white/40 mb-6">
-                ZK-powered private payments. Send funds without revealing transaction details on-chain.
+              <p className="text-white/60 mb-6">
+                End-to-end encrypted payments. Send funds without revealing transaction details on-chain.
               </p>
 
               {/* Features */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-white/30">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-center gap-2 text-sm text-white/50">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Zero-knowledge proofs
+                  Encrypted recipient list
                 </div>
-                <div className="flex items-center gap-2 text-sm text-white/30">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-center gap-2 text-sm text-white/50">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                   Confidential amounts
                 </div>
-                <div className="flex items-center gap-2 text-sm text-white/30">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <div className="flex items-center gap-2 text-sm text-white/50">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Private recipient addresses
+                  Hash-based identity
                 </div>
               </div>
             </div>
-          </div>
+
+            {/* Arrow */}
+            <div className="absolute bottom-8 right-8 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </button>
         </div>
 
         {/* Network Indicator */}
