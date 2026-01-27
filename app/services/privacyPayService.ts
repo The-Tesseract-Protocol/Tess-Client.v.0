@@ -197,7 +197,11 @@ export async function buildDepositTransaction(params: DepositParams): Promise<st
     throw new Error('Missing required contract IDs. Check environment variables.');
   }
 
-  console.log('[PrivacyPay] Building deposit transaction:', {
+  // Log hashLN details to verify format
+  console.log('[PrivacyPay Deposit] hashLN:', hashLN);
+  console.log('[PrivacyPay Deposit] hashLN type:', typeof hashLN);
+  console.log('[PrivacyPay Deposit] hashLN length:', hashLN.length);
+  console.log('[PrivacyPay Deposit] Building deposit transaction:', {
     depositorAddress,
     hashLN,
     amount,
@@ -406,6 +410,16 @@ function encryptForRelayer(
     timestamp,
   };
 
+  // Log the exact payload being sent to relayer
+  console.log('[PrivacyPay Relayer Payload] hashLN in payload:', innerPayload.hashLN);
+  console.log('[PrivacyPay Relayer Payload] Full payload (pre-encryption):', {
+    requestId: innerPayload.requestId,
+    hashLN: innerPayload.hashLN,
+    totalAmount: innerPayload.totalAmount,
+    senderPublicKey: innerPayload.senderPublicKey,
+    timestamp: innerPayload.timestamp,
+  });
+
   const innerPayloadStr = JSON.stringify(innerPayload);
   const innerPayloadBytes = new TextEncoder().encode(innerPayloadStr);
 
@@ -441,6 +455,11 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
   try {
     const { hashLN, recipients, senderRawPublicKey } = params;
 
+    // Log hashLN to verify it matches deposit format exactly
+    console.log('[PrivacyPay Withdraw] hashLN:', hashLN);
+    console.log('[PrivacyPay Withdraw] hashLN type:', typeof hashLN);
+    console.log('[PrivacyPay Withdraw] hashLN length:', hashLN.length);
+
     // Calculate total amount
     const totalAmount = Object.values(recipients).reduce(
       (sum, amt) => sum + parseFloat(amt),
@@ -472,6 +491,7 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
     });
 
     const responseData = await response.json();
+    console.log('[PrivacyPay Withdraw] Relayer response:', JSON.stringify(responseData));
 
     if (!response.ok) {
       return {
@@ -480,10 +500,14 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
       };
     }
 
+    // Map response fields — relayer may use withdrawalRequestId/_id instead of requestId/jobId
+    const requestId = responseData.requestId || responseData.withdrawalRequestId || responseData._id || responseData.jobId;
+    const jobId = responseData.jobId || responseData.withdrawalRequestId || responseData._id;
+
     return {
       success: true,
-      requestId: responseData.requestId || responseData.jobId, // Use jobId as requestId if requestId not provided
-      jobId: responseData.jobId,
+      requestId,
+      jobId,
       senderIdentity: responseData.senderIdentity,
     };
   } catch (error: any) {
@@ -505,30 +529,48 @@ export async function checkJobStatuses(jobIds: string[]): Promise<{
   }>;
 }> {
   try {
-    // Get all statuses (API doesn't support filtering by jobIds)
     const response = await fetch(`${CONFIG.RELAYER_URL}/status`, {
-      method: 'GET',
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobIds }),
     });
 
     if (!response.ok) {
       throw new Error(`Failed to check job statuses: ${response.status}`);
     }
 
-    const allJobs = await response.json();
-    
-    // Filter and transform the jobs to match our expected format
-    const matchingJobs = allJobs
-      .filter((job: any) => jobIds.includes(job._id))
-      .map((job: any) => ({
-        jobId: job._id,
-        status: job.status === 'SUCCESS' ? 'completed' as const : 
-                job.status === 'PENDING' ? 'pending' as const :
-                job.status === 'PROCESSING' ? 'processing' as const : 'failed' as const,
-        txHash: job.stellarTransactionHash,
-      }));
+    const data = await response.json();
+    const rawJobs = Array.isArray(data) ? data : data.jobs || [];
 
-    return { jobs: matchingJobs };
+    // Group by withdrawalRequestId to aggregate status per withdrawal
+    const grouped: Record<string, any[]> = {};
+    for (const job of rawJobs) {
+      const key = job.withdrawalRequestId || job._id;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(job);
+    }
+
+    const jobs = Object.entries(grouped).map(([requestId, groupJobs]) => {
+      const allSuccess = groupJobs.every((j: any) => j.status === 'SUCCESS');
+      const anyFailed = groupJobs.some((j: any) => j.status === 'FAILED');
+      const anyProcessing = groupJobs.some((j: any) => j.status === 'PROCESSING');
+
+      const status: 'pending' | 'processing' | 'completed' | 'failed' =
+        allSuccess ? 'completed' :
+        anyFailed ? 'failed' :
+        anyProcessing ? 'processing' : 'pending';
+
+      // Pick the first available txHash from the group
+      const completedJob = groupJobs.find((j: any) => j.stellarTransactionHash);
+
+      return {
+        jobId: requestId,
+        status,
+        txHash: completedJob?.stellarTransactionHash,
+      };
+    });
+
+    return { jobs };
   } catch (error: any) {
     console.error('Error checking job statuses:', error);
     return { jobs: [] };
@@ -652,19 +694,25 @@ export function updateWithdrawalStatus(
 }
 
 /**
- * Update withdrawal txHash by jobId
+ * Update withdrawal by jobId — sets status, and optionally txHash
  */
-export function updateWithdrawalTxHash(
+export function updateWithdrawalByJobId(
   walletAddress: string,
   jobId: string,
-  txHash: string
+  status: PrivacyPayWithdrawal['status'],
+  txHash?: string
 ): void {
   const session = getSession(walletAddress);
-  const withdrawal = Object.values(session.withdrawals).find(w => w.jobId === jobId);
-  
+  // Match by jobId or by requestId (withdrawalRequestId from API may map to either)
+  const withdrawal = Object.values(session.withdrawals).find(
+    w => w.jobId === jobId || w.requestId === jobId
+  );
+
   if (withdrawal) {
-    withdrawal.txHash = txHash;
-    withdrawal.status = 'completed';
+    withdrawal.status = status;
+    if (txHash) {
+      withdrawal.txHash = txHash;
+    }
     session.withdrawals[withdrawal.requestId] = withdrawal;
     saveSession(session);
   }

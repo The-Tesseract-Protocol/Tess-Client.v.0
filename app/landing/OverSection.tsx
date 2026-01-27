@@ -18,10 +18,10 @@ export const OverviewSection = () => {
                 <AnimatedHeadline text="sender and receiver" delay={200} />
               </h2>
               <p className="text-white/80 text-sm md:text-md max-w-lg leading-relaxed">
-                Every blockchain transaction leaves a trail. Tesseract uses end-to-end
-                encryption and a unique identity system to make payments truly private.
-                Deposit funds, withdraw to anyone – no one can trace the connection,
-                not even us.
+                Every blockchain transaction leaves a trail. Tesseract breaks that
+                pattern — deposit once, pay anyone confidentially. Role-based encryption
+                ensures no single party sees your complete transaction, and on-chain
+                settlement guarantees every payment is accounted for.
               </p>
             </div>
           </div>
@@ -29,12 +29,18 @@ export const OverviewSection = () => {
           {/* Right Content - Circles with Dot Matrix */}
           <div className="relative flex justify-end items-center">
             {/* Main Circle */}
-            <div className="w-64 h-64 md:w-80 md:h-80 lg:w-90 lg:h-140 flex items-center justify-center overflow-hidden">
-             <DotEffect/>
+            <div className="w-full h-64 md:w-full md:h-80 lg:w-150 lg:h-180 flex items-center justify-center overflow-hidden">
+              <video
+                src="/feature2.mp4"
+                loop
+                muted
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover rounded-md"
+              />
             </div>
             
             {/* Secondary Circle - Partial */}
-            <div className="absolute -right-32 md:-right-48 top-1/2 -translate-y-1/2 w-96 h-96 md:w-64 md:h-64 lg:w-110 lg:h-110 bg-[#FAF3E1] rounded-full bg-[#FAF3E1]/40" />
           </div>
         </div>
       </div>

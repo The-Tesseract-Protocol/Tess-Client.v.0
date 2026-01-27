@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
 import {
   getDeposits,
@@ -8,7 +8,7 @@ import {
   PrivacyPayDeposit,
   PrivacyPayWithdrawal,
   checkJobStatuses,
-  updateWithdrawalTxHash,
+  updateWithdrawalByJobId,
 } from '@/app/services/privacyPayService';
 
 export default function TransactionHistory() {
@@ -17,13 +17,57 @@ export default function TransactionHistory() {
   const [deposits, setDeposits] = useState<PrivacyPayDeposit[]>([]);
   const [withdrawals, setWithdrawals] = useState<PrivacyPayWithdrawal[]>([]);
   const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals'>('deposits');
+  const withdrawalsRef = useRef(withdrawals);
 
+  // Keep ref in sync with state
   useEffect(() => {
-    if (address) {
-      setDeposits(getDeposits(address));
-      setWithdrawals(getWithdrawals(address));
+    withdrawalsRef.current = withdrawals;
+  }, [withdrawals]);
+
+  const pollJobs = useCallback(async () => {
+    if (!address) return;
+
+    // Use ref to get current withdrawals without triggering effect re-run
+    const pendingWithdrawals = withdrawalsRef.current.filter(w => w.jobId && !w.txHash);
+
+    if (pendingWithdrawals.length === 0) return;
+
+    const jobIds = pendingWithdrawals.map(w => w.jobId!);
+
+    try {
+      const result = await checkJobStatuses(jobIds);
+
+      // Update all returned jobs with their latest status and txHash
+      let updated = false;
+      result.jobs.forEach(job => {
+        updateWithdrawalByJobId(address, job.jobId, job.status, job.txHash);
+        updated = true;
+      });
+
+      // Refresh withdrawals if any were updated
+      if (updated) {
+        const refreshed = getWithdrawals(address);
+        setWithdrawals(refreshed);
+        withdrawalsRef.current = refreshed;
+      }
+    } catch (error) {
+      console.error('Error polling job statuses:', error);
     }
-  }, [address,deposits.length,withdrawals.length]);
+  }, [address]);
+
+  // Load data and poll immediately on mount / address change
+  useEffect(() => {
+    if (!address) return;
+
+    setDeposits(getDeposits(address));
+    const loaded = getWithdrawals(address);
+    setWithdrawals(loaded);
+    withdrawalsRef.current = loaded;
+
+    // Poll immediately now that withdrawals are in the ref
+    pollJobs();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   // Poll for job statuses every 3 minutes
   useEffect(() => {
@@ -31,43 +75,11 @@ export default function TransactionHistory() {
 
     const pollInterval = 3 * 60 * 1000; // 3 minutes
 
-    const pollJobs = async () => {
-      // Get pending withdrawals (those without txHash)
-      const pendingWithdrawals = withdrawals.filter(w => w.jobId && !w.txHash);
-      
-      if (pendingWithdrawals.length === 0) return;
-
-      const jobIds = pendingWithdrawals.map(w => w.jobId!);
-      
-      try {
-        const result = await checkJobStatuses(jobIds);
-        
-        // Update withdrawals with new txHashes
-        let updated = false;
-        result.jobs.forEach(job => {
-          if (job.txHash) {
-            updateWithdrawalTxHash(address, job.jobId, job.txHash);
-            updated = true;
-          }
-        });
-
-        // Refresh withdrawals if any were updated
-        if (updated) {
-          setWithdrawals(getWithdrawals(address));
-        }
-      } catch (error) {
-        console.error('Error polling job statuses:', error);
-      }
-    };
-
-    // Poll immediately on mount
-    pollJobs();
-
-    // Set up interval for polling
+    // Set up interval for polling (initial call handled separately)
     const interval = setInterval(pollJobs, pollInterval);
     
     return () => clearInterval(interval);
-  }, [address, withdrawals]);
+  }, [address, pollJobs]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -210,9 +222,13 @@ export default function TransactionHistory() {
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                    {withdrawal.txHash ? (
-                      <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    {withdrawal.status === 'completed' ? (
+                      <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : withdrawal.status === 'failed' ? (
+                      <svg className="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     ) : (
                       <div className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
@@ -225,10 +241,10 @@ export default function TransactionHistory() {
                 </div>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-                    withdrawal.txHash ? 'completed' : 'pending'
+                    withdrawal.status
                   )}`}
                 >
-                  {withdrawal.txHash ? 'completed' : 'pending'}
+                  {withdrawal.status}
                 </span>
               </div>
 
@@ -247,7 +263,7 @@ export default function TransactionHistory() {
                     </code>
                   </div>
                 )}
-                {withdrawal.txHash ? (
+                {withdrawal.txHash && (
                   <div className="flex items-center justify-between">
                     <span className="text-white/40">Transaction</span>
                     <a
@@ -262,12 +278,22 @@ export default function TransactionHistory() {
                       </svg>
                     </a>
                   </div>
-                ) : (
+                )}
+                {withdrawal.status === 'failed' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/40">Status</span>
+                    <span className="text-red-400 text-xs flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-400 rounded-full" />
+                      Failed
+                    </span>
+                  </div>
+                )}
+                {(withdrawal.status === 'pending' || withdrawal.status === 'processing') && (
                   <div className="flex items-center justify-between">
                     <span className="text-white/40">Status</span>
                     <span className="text-yellow-400 text-xs flex items-center gap-2">
                       <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
-                      Processing...
+                      {withdrawal.status === 'processing' ? 'Processing...' : 'Pending...'}
                     </span>
                   </div>
                 )}

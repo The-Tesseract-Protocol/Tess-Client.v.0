@@ -26,12 +26,12 @@ const Hero = () => {
             <span className="text-glow">4D Privacy</span>
           </h1>
           <p className="mt-4 text-lg text-white/80">
-            Zk Privacy | Bulk Payments
+            Confidential Payments | Bulk Settlements
           </p>
         </div>
         <div className="absolute bottom-24 right-16 text-right max-w-sm pointer-events-auto">
           <p className="text-lg text-white/80">
-            Anonymous payments on Stellar. Your identity stays hidden, your funds move freely.
+            Make payments on Stellar without exposing who you pay. Settle on-chain with full finality — your operations stay confidential.
           </p>
           <div className="flex gap-x-4 mt-8 justify-end">
             <Button

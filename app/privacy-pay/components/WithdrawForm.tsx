@@ -207,26 +207,31 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         senderRawPublicKey: rawPublicKey,  // Backend uses this for identity derivation
       });
 
-      if (result.success && result.requestId) {
-        setRequestId(result.requestId);
-        setStatus('success');
-
-        // Save withdrawal to session with jobId
-        saveWithdrawal(address, {
-          requestId: result.requestId,
-          jobId: result.jobId,
-          hashLN,
-          totalAmount: getTotalAmount(),
-          recipients: recipientsMap,
-          timestamp: Date.now(),
-          status: 'pending',
-          senderIdentity: result.senderIdentity,
-        });
-
-        onSuccess?.(result.requestId);
-      } else {
-        throw new Error(result.error || 'Withdrawal request failed');
+      if (!result.success) {
+        throw new Error(result.error || 'Relayer rejected the withdrawal request');
       }
+
+      if (!result.requestId) {
+        console.error('[Withdrawal] Missing requestId in result:', result);
+        throw new Error('Relayer returned success but no request ID');
+      }
+
+      setRequestId(result.requestId);
+      setStatus('success');
+
+      // Save withdrawal to session with jobId
+      saveWithdrawal(address, {
+        requestId: result.requestId,
+        jobId: result.jobId,
+        hashLN,
+        totalAmount: getTotalAmount(),
+        recipients: recipientsMap,
+        timestamp: Date.now(),
+        status: 'pending',
+        senderIdentity: result.senderIdentity,
+      });
+
+      onSuccess?.(result.requestId);
     } catch (err: any) {
       console.error('Withdrawal error:', err);
       setError(err.message || 'Withdrawal failed');
