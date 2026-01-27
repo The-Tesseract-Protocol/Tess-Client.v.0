@@ -6,6 +6,7 @@ import {
   submitWithdrawal,
   saveWithdrawal,
   getDeposits,
+  deriveIdentity,
 } from '@/app/services/privacyPayService';
 import { Keypair } from '@stellar/stellar-sdk';
 
@@ -186,10 +187,16 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         recipientsMap[r.address] = r.amount;
       });
 
-      // Get raw public key from address (32 bytes)
-      // Note: In a real implementation, you'd need to get this from the wallet
-      // For now, we'll derive it from the Stellar address
+      // Derive and log expected identity (for debugging)
+      const expectedIdentity = await deriveIdentity(hashLN, address);
+      console.log('🔑 [Withdrawal] Identity Details:');
+      console.log('   HashLN:', hashLN);
+      console.log('   Sender Address:', address);
+      console.log('   Expected Identity (frontend):', expectedIdentity);
+
+      // Extract raw public key (32 bytes) for backend
       const rawPublicKey = Keypair.fromPublicKey(address).rawPublicKey();
+      console.log('   Raw Public Key (base64):', btoa(String.fromCharCode(...rawPublicKey)));
 
       // Step 2: Submit withdrawal
       setStatus('submitting');
@@ -197,7 +204,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         hashLN,
         recipients: recipientsMap,
         senderPublicKey: address,
-        senderRawPublicKey: rawPublicKey,
+        senderRawPublicKey: rawPublicKey,  // Backend uses this for identity derivation
       });
 
       if (result.success && result.requestId) {

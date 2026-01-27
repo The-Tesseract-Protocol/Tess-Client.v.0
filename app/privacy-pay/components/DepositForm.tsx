@@ -52,6 +52,11 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       // Derive identity for tracking
       const identity = await deriveIdentity(hashLN, address);
 
+      console.log('🔑 [Deposit] Identity Details:');
+      console.log('   HashLN:', hashLN);
+      console.log('   Depositor Address:', address);
+      console.log('   Expected Identity:', identity);
+
       // Save pending deposit to session
       saveDeposit(address, {
         hashLN,

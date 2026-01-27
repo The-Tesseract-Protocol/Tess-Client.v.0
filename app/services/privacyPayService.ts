@@ -53,8 +53,8 @@ export interface DepositResult {
 export interface WithdrawParams {
   hashLN: string;
   recipients: Record<string, string>; // address -> amount as string
-  senderPublicKey: string;
-  senderRawPublicKey: Uint8Array; // Raw 32-byte public key
+  senderPublicKey: string; // Stellar address (G... format)
+  senderRawPublicKey: Uint8Array; // Raw 32-byte public key for backend compatibility
 }
 
 export interface WithdrawResult {
@@ -382,7 +382,7 @@ function encryptForRelayer(
   hashLN: string,
   totalAmount: number,
   encryptedD: string,
-  senderPublicKeyBase64: string
+  senderPublicKeyBase64: string  // Base64-encoded raw public key (32 bytes)
 ): string {
   const relayerPublicKeyBase64 = CONFIG.RELAYER_NACL_PUBLIC_KEY;
 
@@ -396,13 +396,13 @@ function encryptForRelayer(
   const requestId = crypto.randomUUID();
   const timestamp = Date.now();
 
-  // Create inner payload
+  // Create inner payload (matches backend test format)
   const innerPayload = {
     requestId,
     hashLN,
     totalAmount,
     encryptedD,
-    senderPublicKey: senderPublicKeyBase64,
+    senderPublicKey: senderPublicKeyBase64,  // Base64 raw key for backend
     timestamp,
   };
 
@@ -451,12 +451,13 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
     const encryptedD = await encryptForDistributor(recipients);
 
     // Encrypt outer layer (for Relayer)
+    // Send base64-encoded raw public key (matches backend test format)
     const senderPublicKeyBase64 = encodeBase64(senderRawPublicKey);
     const encryptedPayload = encryptForRelayer(
       hashLN,
       totalAmount,
       encryptedD,
-      senderPublicKeyBase64
+      senderPublicKeyBase64  // Base64 raw key
     );
 
     // Submit to Relayer
