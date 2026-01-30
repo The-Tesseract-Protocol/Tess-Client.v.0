@@ -14,6 +14,7 @@ import {
   Networks,
 } from '@stellar/stellar-sdk';
 import nacl from 'tweetnacl';
+import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
 
 // ============================================================================
 // Configuration
@@ -330,52 +331,28 @@ export async function submitDepositTransaction(signedTxXdr: string): Promise<Dep
 
 /**
  * Encrypt recipients payload with Distributor's RSA public key
- * Uses Web Crypto API for browser compatibility
+ * Uses hybrid AES-256-CBC + RSA encryption (supports up to ~133 recipients)
  */
-async function encryptForDistributor(recipients: Record<string, string>): Promise<string> {
-  let distributorPublicKeyPem = CONFIG.DISTRIBUTOR_RSA_PUBLIC_KEY;
+async function encryptForDistributor(
+  recipients: Record<string, string>
+): Promise<string> {
+  const distributorPublicKeyPem = CONFIG.DISTRIBUTOR_RSA_PUBLIC_KEY;
 
   if (!distributorPublicKeyPem) {
     throw new Error('Distributor RSA public key not configured');
   }
 
-  // Handle escaped newlines from env variable
-  distributorPublicKeyPem = distributorPublicKeyPem.replace(/\\n/g, '\n');
-
-  // Parse PEM to get the key
-  const pemContents = distributorPublicKeyPem
-    .replace('-----BEGIN PUBLIC KEY-----', '')
-    .replace('-----END PUBLIC KEY-----', '')
-    .replace(/\s/g, '');
-
-  const keyData = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
-
-  // Import the key
-  const publicKey = await crypto.subtle.importKey(
-    'spki',
-    keyData,
-    {
-      name: 'RSA-OAEP',
-      hash: 'SHA-256',
-    },
-    false,
-    ['encrypt']
+  // Use hybrid encryption utility
+  const result = await HybridCryptoUtil.encryptPayload(
+    recipients,
+    distributorPublicKeyPem
   );
 
-  // Encrypt the payload
-  const payloadStr = JSON.stringify(recipients);
-  const payloadBytes = new TextEncoder().encode(payloadStr);
-
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    {
-      name: 'RSA-OAEP',
-    },
-    publicKey,
-    payloadBytes
+  console.log(
+    `🔐 Hybrid encryption: ${result.metadata.recipients} recipients, ${result.metadata.payloadSize} bytes`
   );
 
-  // Return as base64
-  return btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)));
+  return result.encrypted;
 }
 
 /**
@@ -466,7 +443,7 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
       0
     );
 
-    // Encrypt inner layer (for Distributor)
+    // Encrypt inner layer (for Distributor) with hybrid encryption
     const encryptedD = await encryptForDistributor(recipients);
 
     // Encrypt outer layer (for Relayer)

@@ -9,6 +9,7 @@ import {
   deriveIdentity,
 } from '@/app/services/privacyPayService';
 import { Keypair } from '@stellar/stellar-sdk';
+import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
 
 interface Recipient {
   address: string;
@@ -82,8 +83,13 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       return { recipients: [], error: 'No valid recipients found in CSV' };
     }
 
-    if (parsedRecipients.length > 10) {
-      return { recipients: [], error: 'Maximum 10 recipients allowed per withdrawal' };
+    // With hybrid encryption, we can support up to ~133 recipients
+    const maxRecipients = HybridCryptoUtil.calculateMaxRecipients();
+    if (parsedRecipients.length > maxRecipients) {
+      return {
+        recipients: [],
+        error: `Maximum ${maxRecipients} recipients allowed per withdrawal`
+      };
     }
 
     return { recipients: parsedRecipients };
@@ -198,7 +204,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       const rawPublicKey = Keypair.fromPublicKey(address).rawPublicKey();
       console.log('   Raw Public Key (base64):', btoa(String.fromCharCode(...rawPublicKey)));
 
-      // Step 2: Submit withdrawal
+      // Step 2: Submit withdrawal with hybrid AES-256 encryption
       setStatus('submitting');
       const result = await submitWithdrawal({
         hashLN,
@@ -415,7 +421,10 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             <div className="flex justify-end mb-2">
               <button
                 onClick={addRecipient}
-                disabled={isProcessing || recipients.length >= 10}
+                disabled={
+                  isProcessing ||
+                  recipients.length >= HybridCryptoUtil.calculateMaxRecipients()
+                }
                 className="text-sm text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
               >
                 + Add Recipient
@@ -485,9 +494,10 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
           <div className="text-sm text-white/60">
             <p className="text-purple-400 font-medium mb-1">Privacy Protection</p>
             <ul className="space-y-1 text-white/50">
-              <li>Recipients are encrypted end-to-end</li>
+              <li>Recipients are encrypted end-to-end using hybrid AES-256 encryption</li>
               <li>Relayer cannot see who receives funds</li>
               <li>Only the Distributor can decrypt recipients</li>
+              <li>Supports up to {HybridCryptoUtil.calculateMaxRecipients()} recipients per withdrawal</li>
             </ul>
           </div>
         </div>
