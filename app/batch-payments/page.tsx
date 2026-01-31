@@ -8,6 +8,7 @@ import AuthTreeVisualization from './components/AuthTreeVisualization';
 import { SAFE_LIMITS, BulkPaymentService, PaymentRecipient } from '../services/bulkPaymentService';
 import { WalletProvider, useWallet, ConnectWalletButton, NetworkBadge } from '../contexts/WalletContext';
 import { isWalletError, WalletErrorCode } from '../services/walletService';
+import IsoLevelWarp from '../components/ui/isometric-ui';
 
 type TransactionState = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
 
@@ -248,7 +249,13 @@ function BatchPaymentsContent() {
     const canSubmit = validRecipients.length > 0 && walletState.isConnected && !isProcessing;
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen text-white font-mono">
+            <IsoLevelWarp 
+        // Cyber-Violet Color
+        color="100, 50, 250" 
+        density={50} 
+        speed={1.5}
+      />
             {/* Navigation */}
             <nav className="w-full flex items-center justify-between py-6 px-8 lg:px-16 fixed top-0 left-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
                 <div className="flex items-center gap-x-4">
@@ -261,10 +268,10 @@ function BatchPaymentsContent() {
                         </svg>
                         Back
                     </button>
-                    <div className="w-px h-6 bg-white/20" />
+                    <div className="w-px h-6 bg-white/20 font-mono" />
                     <a href="/" className="text-white/80 hover:text-white transition-colors flex items-center">
                         <img src="/Tess_BW.svg" alt="Tesseract" className="h-7 w-7 inline-block mr-2" />
-                        <span className="hidden sm:inline">TESSERACT</span>
+                        <span className="hidden sm:inline font-mono">TESSERACT</span>
                     </a>
                 </div>
 
@@ -276,20 +283,22 @@ function BatchPaymentsContent() {
             </nav>
 
             {/* Main Content */}
-            <div className="pt-24 pb-12 px-8 lg:px-16">
+            <div className="pt-20 pb-12 px-4 md:px-8 font-mono mt-8">
                 {/* Header */}
-                <div className="max-w-6xl mx-auto mb-8">
-                    <h1 className={`text-3xl lg:text-4xl font-bold mb-2 ${lexendTera.className}`}>
-                        Batch Payments
-                    </h1>
-                    <p className="text-white/60">
+                <div className="max-w-5xl mx-auto mb-6 text-center">
+                    <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-6 drop-shadow-2xl">
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-muted font-mono">
+Batch Payment          </span>
+          
+        </h1>
+                    <p className="text-sm md:text-md lg:text-lg  tracking-tighter text-white/40 mb-6 drop-shadow-2xl">
                         Pay up to {SAFE_LIMITS.MAX_TOTAL_RECIPIENTS} recipients with a single signature
                     </p>
                 </div>
 
                 {/* Freighter Not Installed Warning */}
                 {!walletState.isInstalled && (
-                    <div className="max-w-6xl mx-auto mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                    <div className="max-w-6xl mx-auto mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                         <div className="flex items-center gap-3">
                             <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -314,10 +323,10 @@ function BatchPaymentsContent() {
                 )}
 
                 {/* Content Grid */}
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column - Recipients Input */}
-                    <div className="space-y-6">
-                        <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                    <div className="space-y-6 bg-gradient-to-br from-white/5 to-muted/10 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                        <div className="backdrop-blur-lg rounded-2xl  p-6">
                             <h2 className="text-lg font-semibold mb-4">Recipients</h2>
                             <RecipientsInput
                                 recipients={recipients}
@@ -327,7 +336,7 @@ function BatchPaymentsContent() {
                         </div>
 
                         {/* Payment Summary */}
-                        {validRecipients.length >0 && <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                        {validRecipients.length >0 && <div className="bg-black/40 backdrop-blur-lg rounded-2xl  p-6">
                             <h2 className="text-lg font-semibold mb-4">Payment Summary</h2>
                             <div className="space-y-4">
                                 <div className="flex justify-between items-center">
@@ -369,10 +378,10 @@ function BatchPaymentsContent() {
                         <button
                             onClick={executeBatchPayment}
                             disabled={!canSubmit}
-                            className={`w-full py-4 rounded-xl font-medium text-lg transition-all ${
+                            className={`w-full overflow-hidden py-4 rounded-xl font-medium text-lg transition-all ${
                                 canSubmit
-                                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90'
-                                    : 'bg-white/10 text-white/40 cursor-not-allowed'
+                                    ? 'bg-gradient-to-br from-white/60 to-mute text-black hover:opacity-90'
+                                    : ' text-white/40 cursor-not-allowed'
                             }`}
                         >
                             {isProcessing ? (
@@ -459,7 +468,7 @@ function BatchPaymentsContent() {
                     </div>
 
                     {/* Right Column - Auth Tree Visualization */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 bg-gradient-to-br from-white/5 to-muted/10 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
                         <AuthTreeVisualization
                             batches={batchInfo}
                             isProcessing={isTransactionInProgress}
@@ -470,7 +479,7 @@ function BatchPaymentsContent() {
                         />
 
                         {/* How It Works */}
-                        <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                        <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/4 p-6">
                             <h3 className="text-lg font-semibold mb-4">How It Works</h3>
                             <div className="space-y-4">
                                 <div className="flex gap-3">

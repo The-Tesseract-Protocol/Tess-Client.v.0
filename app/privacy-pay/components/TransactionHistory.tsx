@@ -149,28 +149,30 @@ export default function TransactionHistory() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-y-auto scrollbar-hide min-h-[500px] overflow-x-hidden max-h-[500px]">
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <button
           onClick={() => setActiveTab('deposits')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-2 py-2 rounded-4xl text-xs font-medium transition-all flex items-center gap-1 ${
             activeTab === 'deposits'
               ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
               : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
           }`}
         >
-          Deposits ({deposits.length})
+          <span>Deposits</span>
+          <span>({deposits.length})</span>
         </button>
         <button
           onClick={() => setActiveTab('withdrawals')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+          className={`px-2 py-2 rounded-4xl text-xs font-medium transition-all flex items-center gap-1${
             activeTab === 'withdrawals'
               ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
               : 'bg-white/5 text-white/60 hover:bg-white/10 border border-transparent'
           }`}
         >
-          Withdrawals ({withdrawals.length})
+         <span>Withdrawals </span> 
+         <span>({withdrawals.length})</span> 
         </button>
       </div>
 
@@ -184,18 +186,18 @@ export default function TransactionHistory() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                    <svg className="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-white font-medium">{deposit.amount} USDC</p>
-                    <p className="text-white/40 text-xs">{formatDate(deposit.timestamp)}</p>
+                    <p className="text-white font-medium text-xs">{deposit.amount} USDC</p>
+                    <p className="text-white/40 text-[9px]">{formatDate(deposit.timestamp)}</p>
                   </div>
                 </div>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+                  className={`px-2 py-1 rounded text-[10px] font-medium ${getStatusColor(
                     deposit.status
                   )}`}
                 >
@@ -203,21 +205,21 @@ export default function TransactionHistory() {
                 </span>
               </div>
 
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-white/40">Hash</span>
-                  <code className="text-white/60 font-mono text-xs">
+                  <code className="text-white/60 font-mono text-[9px]">
                     {deposit.hashLN.slice(0, 16)}...
                   </code>
                 </div>
                 {deposit.txHash && (
                   <div className="flex items-center justify-between">
-                    <span className="text-white/40">Transaction</span>
+                    <span className="text-white/40 text-xs">Transaction</span>
                     <a
                       href={`https://stellar.expert/explorer/testnet/tx/${deposit.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 hover:text-blue-300 font-mono text-xs"
+                      className="text-blue-400 hover:text-blue-300 font-mono text-[9px]"
                     >
                       {deposit.txHash.slice(0, 8)}...
                     </a>

@@ -263,7 +263,7 @@ export default function AuthTreeVisualization({
   };
 
   return (
-    <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+    <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/5 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Authorization Tree</h3>
