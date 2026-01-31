@@ -10,6 +10,8 @@ import {
   getCurrentLedger,
   generateWalletNonce,
   notifyBackend,
+  getTokenConfig,
+  SUPPORTED_TOKENS,
 } from '@/app/services/privacyPayService';
 import { signTransaction } from '@stellar/freighter-api';
 
@@ -23,6 +25,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
   const { walletState } = useWallet();
   const { address, isConnected } = walletState;
   const [amount, setAmount] = useState('');
+  const [token, setToken] = useState<string>('usdc');
   const [status, setStatus] = useState<DepositStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
@@ -58,10 +61,15 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
       // Step 2: Build transaction
       setStatus('building');
+
+      // Get token config and asset contract ID
+      const { contractId: assetContractId } = getTokenConfig(token);
+
       const txXdr = await buildDepositTransaction({
         depositorAddress: address,
         hashLN,
         amount: depositAmount,
+        token,
       });
 
       // Step 3: Sign with Freighter
@@ -82,7 +90,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
       if (result.success && result.txHash) {
         setTxHash(result.txHash);
-        
+
         // Step 5: Notify Backend
         setStatus('notifying');
         await notifyBackend(
@@ -90,7 +98,9 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
           hashLN,
           depositAmount,
           identity,
-          result.txHash
+          result.txHash,
+          token,
+          assetContractId
         );
 
         setStatus('success');
@@ -130,10 +140,43 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
   return (
     <div className="space-y-6">
+      {/* Token Selection */}
+      <div>
+        <label className="block text-sm font-medium text-white/60 mb-2">
+          Select Pool
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          {Object.entries(SUPPORTED_TOKENS).map(([key, config]) => (
+            <button
+              key={key}
+              onClick={() => setToken(key)}
+              disabled={isProcessing}
+              className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                token === key
+                  ? 'border-blue-500 bg-blue-500/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-white">{config.symbol}</span>
+                {token === key && (
+                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              <p className="text-xs text-white/40 mt-1 text-left">
+                {config.isNative ? 'Native' : 'Contract'} Asset
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Amount Input */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">
-          Deposit Amount (USDC)
+          Deposit Amount
         </label>
         <div className="relative">
           <input
@@ -145,7 +188,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">
-            USDC
+            {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}
           </span>
         </div>
       </div>

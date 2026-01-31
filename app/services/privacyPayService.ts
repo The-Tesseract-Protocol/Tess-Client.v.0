@@ -20,12 +20,33 @@ import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
 // Configuration
 // ============================================================================
 
+// Token configuration
+export interface TokenConfig {
+  symbol: string;
+  decimals: number;
+  isNative: boolean;
+}
+
+export const SUPPORTED_TOKENS: Record<string, TokenConfig> = {
+  usdc: {
+    symbol: 'USDC',
+    decimals: 7,
+    isNative: false,
+  },
+  xlm: {
+    symbol: 'XLM',
+    decimals: 7,
+    isNative: true,
+  },
+};
+
 const CONFIG = {
   SOROBAN_RPC_URL: process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
   NETWORK_PASSPHRASE: process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || Networks.TESTNET,
   TREASURY_CONTRACT_ID: process.env.NEXT_PUBLIC_TREASURY_CONTRACT_ID || '',
   IDM_CONTRACT_ID: process.env.NEXT_PUBLIC_IDM_CONTRACT_ID || '',
-  ASSET_ADDRESS: process.env.NEXT_PUBLIC_ASSET_ADDRESS || '',
+  ASSET_ADDRESS_USDC: process.env.NEXT_PUBLIC_ASSET_ADDRESS_USDC || process.env.NEXT_PUBLIC_ASSET_ADDRESS || '',
+  ASSET_ADDRESS_XLM: process.env.NEXT_PUBLIC_ASSET_ADDRESS_XLM || '',
   RELAYER_URL: process.env.NEXT_PUBLIC_RELAYER_URL || 'http://localhost:3000/api/relayer',
   BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
   DISTRIBUTOR_RSA_PUBLIC_KEY: process.env.NEXT_PUBLIC_DISTRIBUTOR_RSA_PUBLIC_KEY || '',
@@ -34,6 +55,44 @@ const CONFIG = {
 
 const BASE_FEE = '100';
 
+/**
+ * Get token configuration and asset contract ID
+ */
+export function getTokenConfig(tokenSymbol: string = 'usdc'): { config: TokenConfig; contractId: string } {
+  const config = SUPPORTED_TOKENS[tokenSymbol.toLowerCase()];
+  if (!config) {
+    throw new Error(`Unsupported token: ${tokenSymbol}. Supported tokens: ${Object.keys(SUPPORTED_TOKENS).join(', ')}`);
+  }
+
+  let contractId: string;
+  const tokenKey = tokenSymbol.toLowerCase();
+
+  if (tokenKey === 'usdc') {
+    contractId = CONFIG.ASSET_ADDRESS_USDC;
+  } else if (tokenKey === 'xlm') {
+    contractId = CONFIG.ASSET_ADDRESS_XLM;
+  } else {
+    throw new Error(`Asset contract ID not configured for ${tokenSymbol}`);
+  }
+
+  if (!contractId) {
+    throw new Error(`${tokenSymbol.toUpperCase()} asset contract ID not found in environment variables`);
+  }
+
+  return { config, contractId };
+}
+
+/**
+ * Get token price in USD (hardcoded for now)
+ */
+function getTokenPrice(tokenSymbol: string): number {
+  const PRICES: Record<string, number> = {
+    usdc: 1.0,
+    xlm: 0.12,
+  };
+  return PRICES[tokenSymbol.toLowerCase()] || 1.0;
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -41,7 +100,8 @@ const BASE_FEE = '100';
 export interface DepositParams {
   depositorAddress: string;
   hashLN: string;
-  amount: number; // in USDC (will be converted to stroops)
+  amount: number; // in token units (will be converted to stroops)
+  token?: string; // 'usdc' or 'xlm', defaults to 'usdc'
 }
 
 export interface DepositResult {
@@ -57,6 +117,7 @@ export interface WithdrawParams {
   recipients: Record<string, string>; // address -> amount as string
   senderPublicKey: string; // Stellar address (G... format)
   senderRawPublicKey: Uint8Array; // Raw 32-byte public key for backend compatibility
+  token?: string; // 'usdc' or 'xlm', defaults to 'usdc'
 }
 
 export interface WithdrawResult {
@@ -74,6 +135,7 @@ export interface PrivacyPayDeposit {
   txHash: string;
   timestamp: number;
   status: 'pending' | 'confirmed' | 'failed';
+  token?: string; // 'usdc' or 'xlm'
 }
 
 export interface PrivacyPayWithdrawal {
@@ -86,6 +148,7 @@ export interface PrivacyPayWithdrawal {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   txHash?: string;
   senderIdentity?: string;
+  token?: string; // 'usdc' or 'xlm'
 }
 
 export interface PrivacyPaySession {
@@ -179,10 +242,14 @@ export async function notifyBackend(
   hashLN: string,
   amount: number,
   expectedIdentity: string,
-  txHash: string
+  txHash: string,
+  token: string = 'usdc',
+  assetContractId: string
 ): Promise<void> {
   try {
     const depositorHash = await hashDepositorPublicKey(depositorPublicKey);
+    const tokenPrice = getTokenPrice(token);
+    const depositValueUsd = amount * tokenPrice;
 
     const payload = {
       depositorHash,
@@ -191,6 +258,10 @@ export async function notifyBackend(
       amount,
       expectedIdentity,
       txHash,
+      token,
+      assetContractId,
+      tokenPriceUsd: tokenPrice,
+      depositValueUsd,
     };
 
     console.log('[PrivacyPay] Notifying backend of deposit:', payload);
@@ -242,6 +313,7 @@ export async function fetchDepositsFromBackend(depositorPublicKey: string): Prom
       txHash: d.txHash,
       timestamp: new Date(d.createdAt).getTime(),
       status: d.status.toLowerCase() as 'pending' | 'confirmed' | 'failed',
+      token: d.token || 'usdc',
     }));
 
   } catch (error: any) {
@@ -288,11 +360,14 @@ export async function checkAccountStatus(address: string): Promise<{
  * Build deposit transaction for signing with Freighter
  */
 export async function buildDepositTransaction(params: DepositParams): Promise<string> {
-  const { depositorAddress, hashLN, amount } = params;
+  const { depositorAddress, hashLN, amount, token = 'usdc' } = params;
 
-  if (!CONFIG.TREASURY_CONTRACT_ID || !CONFIG.ASSET_ADDRESS) {
+  if (!CONFIG.TREASURY_CONTRACT_ID) {
     throw new Error('Missing required contract IDs. Check environment variables.');
   }
+
+  // Get token configuration and asset contract ID
+  const { config: tokenConfig, contractId: assetContractId } = getTokenConfig(token);
 
   // Log hashLN details to verify format
   console.log('[PrivacyPay Deposit] hashLN:', hashLN);
@@ -302,8 +377,9 @@ export async function buildDepositTransaction(params: DepositParams): Promise<st
     depositorAddress,
     hashLN,
     amount,
+    token: tokenConfig.symbol,
     treasuryContract: CONFIG.TREASURY_CONTRACT_ID,
-    assetAddress: CONFIG.ASSET_ADDRESS,
+    assetAddress: assetContractId,
     networkPassphrase: CONFIG.NETWORK_PASSPHRASE,
   });
 
@@ -322,11 +398,11 @@ export async function buildDepositTransaction(params: DepositParams): Promise<st
   // Create treasury contract instance
   const treasuryContract = new Contract(CONFIG.TREASURY_CONTRACT_ID);
 
-  // Convert amount to stroops (7 decimals)
-  const amountInStroops = Math.floor(amount * 10_000_000);
+  // Convert amount based on token decimals
+  const amountInStroops = Math.floor(amount * Math.pow(10, tokenConfig.decimals));
   console.log('[PrivacyPay] Amount in stroops:', amountInStroops);
 
-  // Build transaction
+  // Build transaction with asset parameter
   const transaction = new TransactionBuilder(
     new Account(depositorAddress, account.sequenceNumber()),
     {
@@ -339,7 +415,8 @@ export async function buildDepositTransaction(params: DepositParams): Promise<st
         'deposit',
         nativeToScVal(depositorAddress, { type: 'address' }),
         nativeToScVal(hashLN, { type: 'string' }),
-        nativeToScVal(amountInStroops, { type: 'i128' })
+        nativeToScVal(amountInStroops, { type: 'i128' }),
+        nativeToScVal(assetContractId, { type: 'address' })
       )
     )
     .setTimeout(30)
@@ -459,7 +536,8 @@ function encryptForRelayer(
   hashLN: string,
   totalAmount: number,
   encryptedD: string,
-  senderPublicKeyBase64: string  // Base64-encoded raw public key (32 bytes)
+  senderPublicKeyBase64: string,  // Base64-encoded raw public key (32 bytes)
+  token: string = 'usdc'
 ): string {
   const relayerPublicKeyBase64 = CONFIG.RELAYER_NACL_PUBLIC_KEY;
 
@@ -480,6 +558,7 @@ function encryptForRelayer(
     totalAmount,
     encryptedD,
     senderPublicKey: senderPublicKeyBase64,  // Base64 raw key for backend
+    token,
     timestamp,
   };
 
@@ -526,12 +605,13 @@ function encryptForRelayer(
  */
 export async function submitWithdrawal(params: WithdrawParams): Promise<WithdrawResult> {
   try {
-    const { hashLN, recipients, senderRawPublicKey } = params;
+    const { hashLN, recipients, senderRawPublicKey, token = 'usdc' } = params;
 
     // Log hashLN to verify it matches deposit format exactly
     console.log('[PrivacyPay Withdraw] hashLN:', hashLN);
     console.log('[PrivacyPay Withdraw] hashLN type:', typeof hashLN);
     console.log('[PrivacyPay Withdraw] hashLN length:', hashLN.length);
+    console.log('[PrivacyPay Withdraw] token:', token);
 
     // Calculate total amount
     const totalAmount = Object.values(recipients).reduce(
@@ -549,7 +629,8 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
       hashLN,
       totalAmount,
       encryptedD,
-      senderPublicKeyBase64  // Base64 raw key
+      senderPublicKeyBase64,  // Base64 raw key
+      token
     );
 
     // Submit to Relayer

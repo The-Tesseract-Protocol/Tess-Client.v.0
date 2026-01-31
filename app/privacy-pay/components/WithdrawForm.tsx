@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
 import {
   submitWithdrawal,
   saveWithdrawal,
   getDeposits,
   deriveIdentity,
+  SUPPORTED_TOKENS,
+  fetchDepositsFromBackend,
+  saveDeposit,
 } from '@/app/services/privacyPayService';
 import { Keypair } from '@stellar/stellar-sdk';
 import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
@@ -27,6 +30,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const { walletState } = useWallet();
   const { address, isConnected } = walletState;
   const [hashLN, setHashLN] = useState('');
+  const [token, setToken] = useState<string>('usdc');
   const [recipients, setRecipients] = useState<Recipient[]>([{ address: '', amount: '' }]);
   const [status, setStatus] = useState<WithdrawStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -38,8 +42,41 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const [csvFileName, setCsvFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get user's deposits for hashLN selection
-  const userDeposits = address ? getDeposits(address) : [];
+  // Deposits state
+  const [userDeposits, setUserDeposits] = useState<any[]>([]);
+  const [loadingDeposits, setLoadingDeposits] = useState(false);
+
+  // Fetch deposits from backend when component mounts or address changes
+  useEffect(() => {
+    const loadDeposits = async () => {
+      if (!address) {
+        setUserDeposits([]);
+        return;
+      }
+
+      setLoadingDeposits(true);
+      try {
+        // Fetch from backend
+        const backendDeposits = await fetchDepositsFromBackend(address);
+
+        // Update localStorage cache
+        backendDeposits.forEach(deposit => {
+          saveDeposit(address, deposit);
+        });
+
+        // Set to state
+        setUserDeposits(backendDeposits);
+      } catch (error) {
+        console.error('Failed to fetch deposits:', error);
+        // Fallback to localStorage if backend fails
+        setUserDeposits(getDeposits(address));
+      } finally {
+        setLoadingDeposits(false);
+      }
+    };
+
+    loadDeposits();
+  }, [address]);
 
   // CSV parsing function
   const parseCSV = (content: string): { recipients: Recipient[]; error?: string } => {
@@ -211,6 +248,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         recipients: recipientsMap,
         senderPublicKey: address,
         senderRawPublicKey: rawPublicKey,  // Backend uses this for identity derivation
+        token,
       });
 
       if (!result.success) {
@@ -235,6 +273,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         timestamp: Date.now(),
         status: 'pending',
         senderIdentity: result.senderIdentity,
+        token,
       });
 
       onSuccess?.(result.requestId);
@@ -267,9 +306,14 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       {/* HashLN Input/Selection */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">
-          Select Deposit  
+          Select Deposit
         </label>
-        {userDeposits.length > 0 ? (
+        {loadingDeposits ? (
+          <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-white/60 text-sm">Loading deposits...</span>
+          </div>
+        ) : userDeposits.length > 0 ? (
           <select
             value={hashLN}
             onChange={(e) => setHashLN(e.target.value)}
@@ -281,7 +325,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
               .filter((d) => d.status === 'confirmed')
               .map((d) => (
                 <option key={d.hashLN} value={d.hashLN}>
-                  {d.hashLN.slice(0, 16)}... ({d.amount} USDC)
+                  {d.hashLN.slice(0, 16)}... ({d.amount} {(d.token || 'usdc').toUpperCase()})
                 </option>
               ))}
           </select>
@@ -290,12 +334,44 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             type="text"
             value={hashLN}
             onChange={(e) => setHashLN(e.target.value)}
-            placeholder="Enter your deposit hash"
+            placeholder="Enter your deposit hash or make a deposit first"
             disabled={isProcessing}
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 font-mono text-sm"
           />
         )}
-       
+      </div>
+
+      {/* Token Selection */}
+      <div>
+        <label className="block text-sm font-medium text-white/60 mb-2">
+          Select Pool
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          {Object.entries(SUPPORTED_TOKENS).map(([key, config]) => (
+            <button
+              key={key}
+              onClick={() => setToken(key)}
+              disabled={isProcessing}
+              className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                token === key
+                  ? 'border-purple-500 bg-purple-500/10'
+                  : 'border-white/10 bg-white/5 hover:border-white/20'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-white">{config.symbol}</span>
+                {token === key && (
+                  <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              <p className="text-xs text-white/40 mt-1 text-left">
+                {config.isNative ? 'Native' : 'Contract'} Asset
+              </p>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Recipients */}
@@ -401,7 +477,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
                   {recipients.slice(0, 5).map((r, i) => (
                     <div key={i} className="flex justify-between text-xs">
                       <span className="font-mono text-white/60 truncate max-w-[60%]">{r.address}</span>
-                      <span className="text-purple-400">{r.amount} USDC</span>
+                      <span className="text-purple-400">{r.amount} {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}</span>
                     </div>
                   ))}
                   {recipients.length > 5 && (
@@ -476,7 +552,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         <div className="flex justify-between items-center">
           <span className="text-white/60">Total Withdrawal</span>
           <span className="text-xl font-semibold text-white">
-            {getTotalAmount().toFixed(2)} USDC
+            {getTotalAmount().toFixed(2)} {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}
           </span>
         </div>
         <div className="flex justify-between items-center mt-2 text-sm">
