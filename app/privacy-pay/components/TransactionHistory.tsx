@@ -192,7 +192,7 @@ export default function TransactionHistory() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-white font-medium text-xs">{deposit.amount} USDC</p>
+                    <p className="text-white font-medium text-xs">{deposit.amount} {deposit.token?.toUpperCase() }</p>
                     <p className="text-white/40 text-[9px]">{formatDate(deposit.timestamp)}</p>
                   </div>
                 </div>
@@ -255,7 +255,7 @@ export default function TransactionHistory() {
                     )}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{withdrawal.totalAmount} USDC</p>
+                    <p className="text-white font-medium">{withdrawal.totalAmount} {withdrawal.token?.toUpperCase() }</p>
                     <p className="text-white/40 text-xs">{formatDate(withdrawal.timestamp)}</p>
                   </div>
                 </div>
