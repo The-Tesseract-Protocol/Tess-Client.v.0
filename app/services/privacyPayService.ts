@@ -27,6 +27,7 @@ const CONFIG = {
   IDM_CONTRACT_ID: process.env.NEXT_PUBLIC_IDM_CONTRACT_ID || '',
   ASSET_ADDRESS: process.env.NEXT_PUBLIC_ASSET_ADDRESS || '',
   RELAYER_URL: process.env.NEXT_PUBLIC_RELAYER_URL || 'http://localhost:3000/api/relayer',
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
   DISTRIBUTOR_RSA_PUBLIC_KEY: process.env.NEXT_PUBLIC_DISTRIBUTOR_RSA_PUBLIC_KEY || '',
   RELAYER_NACL_PUBLIC_KEY: process.env.NEXT_PUBLIC_RELAYER_NACL_PUBLIC_KEY || '',
 };
@@ -139,6 +140,18 @@ export async function deriveIdentity(hashLN: string, depositorAddress: string): 
 }
 
 /**
+ * Hash depositor public key for backend indexing
+ * Uses SHA-256 and returns hex string
+ */
+export async function hashDepositorPublicKey(publicKey: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(publicKey);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/**
  * Get current ledger number from Stellar
  */
 export async function getCurrentLedger(): Promise<number> {
@@ -152,6 +165,89 @@ export async function getCurrentLedger(): Promise<number> {
  */
 export function generateWalletNonce(): number {
   return Math.floor(Math.random() * 1000000000);
+}
+
+// ============================================================================
+// Backend Integration (Deposits)
+// ============================================================================
+
+/**
+ * Notify backend of successful deposit
+ */
+export async function notifyBackend(
+  depositorPublicKey: string,
+  hashLN: string,
+  amount: number,
+  expectedIdentity: string,
+  txHash: string
+): Promise<void> {
+  try {
+    const depositorHash = await hashDepositorPublicKey(depositorPublicKey);
+
+    const payload = {
+      depositorHash,
+      hashLN,
+      depositorPublicKey,
+      amount,
+      expectedIdentity,
+      txHash,
+    };
+
+    console.log('[PrivacyPay] Notifying backend of deposit:', payload);
+
+    const response = await fetch(`${CONFIG.BACKEND_URL}/api/treasury/deposit/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Backend notification failed: ${response.status} - ${errorText}`);
+    }
+
+    console.log('[PrivacyPay] Backend notified successfully');
+  } catch (error: any) {
+    console.warn('[PrivacyPay] Failed to notify backend:', error.message);
+    // Don't throw, just warn, as the on-chain deposit was successful
+  }
+}
+
+/**
+ * Fetch deposits from backend
+ */
+export async function fetchDepositsFromBackend(depositorPublicKey: string): Promise<PrivacyPayDeposit[]> {
+  try {
+    const depositorHash = await hashDepositorPublicKey(depositorPublicKey);
+    const url = `${CONFIG.BACKEND_URL}/api/treasury/deposits?depositorHash=${depositorHash}`;
+    
+    console.log('[PrivacyPay] Fetching deposits from:', url);
+    
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch deposits: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const deposits = data.deposits || [];
+
+    // Map backend response to PrivacyPayDeposit interface
+    return deposits.map((d: any) => ({
+      hashLN: d.hashLN,
+      identity: d.expectedIdentity,
+      amount: parseFloat(d.amount),
+      txHash: d.txHash,
+      timestamp: new Date(d.createdAt).getTime(),
+      status: d.status.toLowerCase() as 'pending' | 'confirmed' | 'failed',
+    }));
+
+  } catch (error: any) {
+    console.error('[PrivacyPay] Error fetching deposits from backend:', error);
+    return [];
+  }
 }
 
 // ============================================================================

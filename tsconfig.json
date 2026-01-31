@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "withdraw.ts",
+    "deposit.ts",
     "hybrid-crypto.util.ts",
     "scripts/**/*"
   ]

@@ -9,8 +9,7 @@ import {
   deriveIdentity,
   getCurrentLedger,
   generateWalletNonce,
-  saveDeposit,
-  updateDepositStatus,
+  notifyBackend,
 } from '@/app/services/privacyPayService';
 import { signTransaction } from '@stellar/freighter-api';
 
@@ -18,7 +17,7 @@ interface DepositFormProps {
   onSuccess?: (txHash: string, hashLN: string) => void;
 }
 
-type DepositStatus = 'idle' | 'generating' | 'building' | 'signing' | 'submitting' | 'success' | 'error';
+type DepositStatus = 'idle' | 'generating' | 'building' | 'signing' | 'submitting' | 'notifying' | 'success' | 'error';
 
 export default function DepositForm({ onSuccess }: DepositFormProps) {
   const { walletState } = useWallet();
@@ -57,16 +56,6 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       console.log('   Depositor Address:', address);
       console.log('   Expected Identity:', identity);
 
-      // Save pending deposit to session
-      saveDeposit(address, {
-        hashLN,
-        identity,
-        amount: depositAmount,
-        txHash: '',
-        timestamp: Date.now(),
-        status: 'pending',
-      });
-
       // Step 2: Build transaction
       setStatus('building');
       const txXdr = await buildDepositTransaction({
@@ -93,8 +82,18 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
       if (result.success && result.txHash) {
         setTxHash(result.txHash);
+        
+        // Step 5: Notify Backend
+        setStatus('notifying');
+        await notifyBackend(
+          address,
+          hashLN,
+          depositAmount,
+          identity,
+          result.txHash
+        );
+
         setStatus('success');
-        updateDepositStatus(address, hashLN, 'confirmed', result.txHash);
         onSuccess?.(result.txHash, hashLN);
       } else {
         throw new Error(result.error || 'Transaction failed');
@@ -103,9 +102,6 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       console.error('Deposit error:', err);
       setError(err.message || 'Deposit failed');
       setStatus('error');
-      if (generatedHashLN && address) {
-        updateDepositStatus(address, generatedHashLN, 'failed');
-      }
     }
   };
 
@@ -119,6 +115,8 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
         return 'Please sign in Freighter...';
       case 'submitting':
         return 'Submitting to Stellar...';
+      case 'notifying':
+        return 'Notifying backend...';
       case 'success':
         return 'Deposit successful!';
       case 'error':
@@ -128,7 +126,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
     }
   };
 
-  const isProcessing = ['generating', 'building', 'signing', 'submitting'].includes(status);
+  const isProcessing = ['generating', 'building', 'signing', 'submitting', 'notifying'].includes(status);
 
   return (
     <div className="space-y-6">

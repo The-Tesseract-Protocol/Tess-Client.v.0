@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
 import {
-  getDeposits,
+  fetchDepositsFromBackend,
   getWithdrawals,
   PrivacyPayDeposit,
   PrivacyPayWithdrawal,
@@ -17,6 +17,7 @@ export default function TransactionHistory() {
   const [deposits, setDeposits] = useState<PrivacyPayDeposit[]>([]);
   const [withdrawals, setWithdrawals] = useState<PrivacyPayWithdrawal[]>([]);
   const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals'>('deposits');
+  const [isLoadingDeposits, setIsLoadingDeposits] = useState(false);
   const withdrawalsRef = useRef(withdrawals);
 
   // Keep ref in sync with state
@@ -59,7 +60,24 @@ export default function TransactionHistory() {
   useEffect(() => {
     if (!address) return;
 
-    setDeposits(getDeposits(address));
+    // Fetch deposits from backend
+    const loadDeposits = async () => {
+      setIsLoadingDeposits(true);
+      try {
+        const data = await fetchDepositsFromBackend(address);
+        setDeposits(data);
+      } catch (error) {
+        console.error('Failed to load deposits:', error);
+      } finally {
+        setIsLoadingDeposits(false);
+      }
+    };
+
+    loadDeposits();
+
+    // Load withdrawals (still local storage for now as per instructions mainly focused on deposit query)
+    // If withdrawals also need to be backend based, we'd need a similar endpoint. 
+    // Assuming only deposits for now based on prompt.
     const loaded = getWithdrawals(address);
     setWithdrawals(loaded);
     withdrawalsRef.current = loaded;
