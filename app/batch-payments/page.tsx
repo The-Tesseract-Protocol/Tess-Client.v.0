@@ -248,7 +248,7 @@ function BatchPaymentsContent() {
     const canSubmit = validRecipients.length > 0 && walletState.isConnected && !isProcessing;
 
     return (
-        <div className="min-h-screen bg-black text-white">
+        <div className="min-h-screen bg-black text-white font-mono">
             {/* Navigation */}
             <nav className="w-full flex items-center justify-between py-6 px-8 lg:px-16 fixed top-0 left-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/5">
                 <div className="flex items-center gap-x-4">
@@ -261,10 +261,10 @@ function BatchPaymentsContent() {
                         </svg>
                         Back
                     </button>
-                    <div className="w-px h-6 bg-white/20" />
+                    <div className="w-px h-6 bg-white/20 font-mono" />
                     <a href="/" className="text-white/80 hover:text-white transition-colors flex items-center">
                         <img src="/Tess_BW.svg" alt="Tesseract" className="h-7 w-7 inline-block mr-2" />
-                        <span className="hidden sm:inline">TESSERACT</span>
+                        <span className="hidden sm:inline font-mono">TESSERACT</span>
                     </a>
                 </div>
 
@@ -276,10 +276,10 @@ function BatchPaymentsContent() {
             </nav>
 
             {/* Main Content */}
-            <div className="pt-24 pb-12 px-8 lg:px-16">
+            <div className="pt-20 pb-12 px-4 md:px-8 font-mono mt-8">
                 {/* Header */}
-                <div className="max-w-6xl mx-auto mb-8">
-                    <h1 className={`text-3xl lg:text-4xl font-bold mb-2 ${lexendTera.className}`}>
+                <div className="max-w-5xl mx-auto mb-6">
+                    <h1 className={`text-2xl lg:text-3xl font-bold mb-2 font-mono `}>
                         Batch Payments
                     </h1>
                     <p className="text-white/60">
@@ -289,7 +289,7 @@ function BatchPaymentsContent() {
 
                 {/* Freighter Not Installed Warning */}
                 {!walletState.isInstalled && (
-                    <div className="max-w-6xl mx-auto mb-8 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                    <div className="max-w-6xl mx-auto mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
                         <div className="flex items-center gap-3">
                             <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -314,7 +314,7 @@ function BatchPaymentsContent() {
                 )}
 
                 {/* Content Grid */}
-                <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Column - Recipients Input */}
                     <div className="space-y-6">
                         <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/10 p-6">

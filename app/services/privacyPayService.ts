@@ -535,7 +535,7 @@ export async function checkJobStatuses(jobIds: string[]): Promise<{
       const status: 'pending' | 'processing' | 'completed' | 'failed' =
         allSuccess ? 'completed' :
         anyFailed ? 'failed' :
-        anyProcessing ? 'processing' : 'pending';
+        anyProcessing ? 'processing': 'pending';
 
       // Pick the first available txHash from the group
       const completedJob = groupJobs.find((j: any) => j.stellarTransactionHash);

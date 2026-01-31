@@ -8,6 +8,10 @@ export default {
     extend: {
       fontFamily: {
         lexend: ["var(--font-lexend-tera)"],
+        space: ["var(--font-space-grotesk)"],
+        inter: ["var(--font-inter)"],
+        mono: ["var(--font-jetbrains)"],
+        outfit: ["var(--font-outfit)"],
       },
     },
   },
