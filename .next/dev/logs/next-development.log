@@ -14956,3 +14956,4 @@ Import traces:
 [05:51:22.458] Browser LOG     [PrivacyPay Relayer Payload] Full payload (pre-encryption): {"hashLN":"e675dcc920db19218a8096a3100f8c1e","requestId":"998b3d5c-1367-4f0d-b116-9ba5ee211131","senderPublicKey":"Qmfs2ri/RIl2R4p+F61AebUY3IGvilxZwT7WVVczvhw=","timestamp":1769517324471,"totalAmount":15}
 [05:51:23.844] Browser LOG     [PrivacyPay Withdraw] Relayer response: {"statusCode":500,"timestamp":"2026-01-27T12:35:25.847Z","path":"/api/relayer/withdraw","message":"Internal Server Error"}
 [05:51:23.844] Browser ERROR   Withdrawal error: {}
+[00:07:15.054] Server  LOG     ✓ Compiled in 278ms
