@@ -7,7 +7,7 @@ import React from 'react';
 
 export const Component = () => {
     // Generate a random number within a range
-    const random = (min, max) => Math.random() * (max - min) + min;
+    const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
     return (
             <main className="hero-section w-full h-screen z-10">
@@ -25,7 +25,7 @@ export const Component = () => {
                             '--r-end': `${random(-30, 30)}deg`,
                             animationDuration: `${duration}s`,
                             animationDelay: `${delay}s`,
-                        }}>
+                        } as React.CSSProperties & Record<string, any>}>
                             <div className="origami-crane" style={{
                                 transform: `scale(${scale})`,
                                 animationDelay: `${random(-4, 0)}s`,
