@@ -263,7 +263,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const isProcessing = ['encrypting', 'submitting'].includes(status);
 
   return (
-    <div className="space-y-6 overflow-y-auto min-h-[400px] max-h-[500px]">
+    <div className="space-y-6 overflow-y-auto min-h-[470px] max-h-[500px]">
       {/* HashLN Input/Selection */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">

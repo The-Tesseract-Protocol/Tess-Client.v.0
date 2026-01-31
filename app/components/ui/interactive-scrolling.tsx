@@ -7,28 +7,28 @@ const slidesData = [
   {
     title: "Private Deposits",
     description: "Deposit funds into a shared pool with a private withdrawal secret only you control. Your deposit is verified on-chain, but your identity is never exposed — giving you full authority over your funds.",
-    image: "Privatedeposits.png",
+    image: "Deposit.png",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
     title: "End-to-End Encryption",
     description: "Your payment instructions are protected by dual-layer encryption. Each party in the process only sees what they need to — no single entity ever has the full picture of your transaction.",
-    image: "E2E.png",
+    image: "key.png",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
     title: "Confidential Distribution",
     description: "Your recipients get paid without any traceable link back to you. Payments settle on-chain for trust and finality, but the connection between sender and receiver stays completely private.",
-    image: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?q=80&w=2070&auto=format&fit=crop",
+    image: "distribution.png",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
   {
     title: "Bulk Payments",
     description: "Pay hundreds of recipients in one go with a single authorization. Built for payroll, vendor settlements, and large-scale distributions — all with the same level of confidentiality.",
-    image: "BulkPayments.png",
+    image: "bulk.png",
     bgColor: "#F5E7C6",
     textColor: "#000000",
   },
@@ -269,7 +269,7 @@ const ScrollingFeatureShowcase = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 h-full w-full max-w-8xl mx-auto">
             
             {/* Left Column: Text Content, Pagination & Button */}
-            <div className="relative flex flex-col justify-center p-8 md:p-16 border-r border-black/10">
+            <div className="relative flex flex-col justify-center p-8 md:p-16 ">
               {/* Pagination Bars */}
               <div className="absolute top-16 left-16 flex space-x-2">
                 {slidesData.map((_, index) => (
@@ -320,7 +320,7 @@ const ScrollingFeatureShowcase = () => {
 
             {/* Right Column: Image Content with Grid Background */}
             <div className="hidden md:flex items-center justify-center p-8" style={gridPatternStyle}>
-              <div className="relative w-[100%] h-[80vh] rounded-2xl overflow-hidden shadow-2xl border-4 border-black/5">
+              <div className="relative w-[100%] h-[80vh] overflow-hidden">
                 <div 
                   className="absolute top-0 left-0 w-full h-full transition-transform duration-700 ease-in-out"
                   style={{ transform: `translateY(-${activeIndex * 100}%)` }}

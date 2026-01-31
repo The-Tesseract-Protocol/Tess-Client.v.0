@@ -1,12 +1,20 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Background from '@/app/components/ui/background-snippet';
+import IsoLevelWarp from '../components/ui/isometric-ui';
 
 export default function Dashboard() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen  text-white">
+      <IsoLevelWarp 
+        // Cyber-Violet Color
+        color="100, 50, 250" 
+        density={50} 
+        speed={1.5}
+      />
       {/* Navigation */}
       <nav className="w-full flex items-center justify-between py-8 px-16 fixed top-0 left-0 z-50">
         <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden">
@@ -19,30 +27,27 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="flex flex-col items-center justify-start px-4 md:px-8 font-space pt-28 pb-8 mt-8">
-        <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold mb-2 font-mono mt-4 `}>
-            Choose Your Path
-          </h1>
-          <p className="text-white/60 text-base max-w-lg mx-auto font-mono">
-            Select a payment method to get started with Tesseract
-          </p>
-        </div>
-
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-6 drop-shadow-2xl">
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-muted font-mono">
+Choose your Path
+          </span>
+          
+        </h1>
         {/* Cards Container */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full mt-5">
           {/* Batch Payments Card */}
           <button
             onClick={() => router.push('/batch-payments')}
-            className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 backdrop-blur-lg p-6 text-left transition-all duration-300 hover:border-white/40 hover:bg-white/5"
+            className="group relative overflow-hidden rounded-2xl border border-white/1 bg-gradient-to-br from-white/8 to-muted/30 shadow backdrop-blur-lg p-6 text-left transition-all duration-300 hover:border-white/40 hover:bg-white/5"
           >
             {/* Glow effect */}
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-black via-transparent " />
             </div>
 
             {/* Icon */}
             <div className="relative mb-4">
-              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white/40 to-muted flex items-center justify-center">
                 <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
@@ -92,16 +97,16 @@ export default function Dashboard() {
           {/* Privacy Pay Card - Active */}
           <button
             onClick={() => router.push('/privacy-pay')}
-            className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 backdrop-blur-lg p-6 text-left transition-all duration-300 hover:border-white/40 hover:bg-white/5"
+            className="group relative overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-white/8 to-muted/30 shadow backdrop-blur-lg p-6 text-left transition-all duration-300 hover:border-white/40 hover:bg-white/5"
           >
             {/* Glow effect */}
             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-pink-500/10" />
+              <div className="absolute inset-0 bg-gradient-to-br from-black-500/10 via-transparent to-white-500/10" />
             </div>
 
             {/* Icon */}
             <div className="relative mb-4">
-              <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-white/40 to-muted flex items-center justify-center">
                 <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -150,8 +155,7 @@ export default function Dashboard() {
         </div>
 
         {/* Network Indicator */}
-        <div className="mt-8 flex items-center gap-2 text-sm text-white/40">
-          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+        <div className="mt-8 flex items-center gap-2 text-sm text-white/40 z-10 font-mono">
           <span>Connected to Stellar Testnet</span>
         </div>
       </div>
