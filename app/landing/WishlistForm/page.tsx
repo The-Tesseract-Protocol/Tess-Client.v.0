@@ -37,7 +37,7 @@ export default function WishlistFormPage() {
               ease: "easeOut",
             }}
             viewport={{ once: true }}
-            className="w-full px-4 py-4 relative mt-3 max-w-lg backdrop-blur-md rounded-xl py-2 shadow-lg border border-white/5"
+            className="w-full text-[1px] px-4 py-4 relative mt-3 max-w-lg backdrop-blur-md rounded-xl py-2 shadow-lg border border-white/5"
           >
             <form className="flex w-full flex-col gap-4 relative ">
               <input
@@ -67,8 +67,8 @@ export default function WishlistFormPage() {
                 className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none backdrop-blur-sm"
               />
               
-                <div className="text-white/30 text-xs">
-                  <span className="rounded-full text-[8px]  text-white px-2 py-1.5 mr-1">*</span>Tell us what you liked about us , this comment       might displayed on our page
+                <div className="text-white/30 text-[9px] mb-3">
+                  This comment might displayed on our page.
                 </div>
           
               <button

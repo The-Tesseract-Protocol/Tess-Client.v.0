@@ -20,7 +20,10 @@ export default function Home() {
 
         <Features />
 
+        <Reviews/>
         <Footer />
+
+
 
       </main>
     </ReactLenis>
