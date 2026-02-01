@@ -29,7 +29,7 @@ export default function TransactionHistory() {
     if (!address) return;
 
     // Use ref to get current withdrawals without triggering effect re-run
-    const pendingWithdrawals = withdrawalsRef.current.filter(w => w.jobId && !w.txHash);
+    const pendingWithdrawals = withdrawalsRef.current.filter(w => w.jobId);
 
     if (pendingWithdrawals.length === 0) return;
 

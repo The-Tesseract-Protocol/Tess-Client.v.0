@@ -33,7 +33,7 @@ const Hero = () => {
           <p className="text-lg text-white/80">
             Make payments on Stellar without exposing who you pay. Settle on-chain with full finality, your operations stay confidential.
           </p>
-          {/* <div className="flex gap-x-4 mt-8 justify-end">
+          <div className="flex gap-x-4 mt-8 justify-end">
             <Button
               variant="outline"
               className="flex items-center gap-x-2"
@@ -44,7 +44,7 @@ const Hero = () => {
                 +
               </span>
             </Button>
-          </div> */}
+          </div>
         </div>
       </div>
     </div>

@@ -263,7 +263,7 @@ export default function AuthTreeVisualization({
   };
 
   return (
-    <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/5 p-6">
+    <div className="bg-transparent backdrop-blur-lg rounded-2xl border border-white/5 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Authorization Tree</h3>
@@ -304,7 +304,7 @@ export default function AuthTreeVisualization({
           {/* Connection Lines */}
           {batches.length > 0 && (
             <div className="relative w-full mt-4 mb-4">
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/20" />
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/5" />
               <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[80%] h-px bg-white/20" />
             </div>
           )}

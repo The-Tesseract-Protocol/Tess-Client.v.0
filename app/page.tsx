@@ -10,16 +10,17 @@ import Footer from './landing/Footer';
 export default function Home() {
   return (
     <ReactLenis root>
-      <main className="bg-black overflow-x-hidden ">
+      <main className="bg-black overflow-x-hidden h-screen w-screen">
+       
         <Navbar />
         <Hero />
         <InvestorCarousel />
         {/* Wrapper for sticky scroll effect between sections */}
-        <div className="wrapper ">
+        <div className="h-screen">
           <OverviewSection />
           <Features />
-
         </div>
+
         <Footer />
 
       </main>
