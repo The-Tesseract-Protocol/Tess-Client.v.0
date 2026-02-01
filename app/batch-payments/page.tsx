@@ -8,7 +8,7 @@ import AuthTreeVisualization from './components/AuthTreeVisualization';
 import { SAFE_LIMITS, BulkPaymentService, PaymentRecipient } from '../services/bulkPaymentService';
 import { WalletProvider, useWallet, ConnectWalletButton, NetworkBadge } from '../contexts/WalletContext';
 import { isWalletError, WalletErrorCode } from '../services/walletService';
-import IsoLevelWarp from '../components/ui/isometric-ui';
+// import IsoLevelWarp from '../components/ui/isometric-ui';
 import NeuralBackground from '../components/ui/flow-field-background';
 
 type TransactionState = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';

@@ -22,10 +22,10 @@ const Footer = () => {
                     <h1 className="text-[12vw] md:text-[9rem] font-bold tracking-tighter leading-none select-none">
                         TESSERACT
                     </h1>
-                    <p className="text-white/80 text-lg md:text-2xl font-light tracking-wide max-w-4xl">
+                    <p className="text-white/80 text-sm md:text-lg font-light tracking-wide max-w-4xl">
                         Functional Privacy For Institutions.
                     </p>
-                    <p className="text-white/80 text-lg md:text-2xl font-light tracking-wide max-w-4xl">
+                    <p className="text-white/80 text-sm md:text-lg font-light tracking-wide max-w-4xl">
                         Compliant Confidential Auditable Payments on Stellar.
                     </p>
                 </div>
