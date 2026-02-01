@@ -1,10 +1,17 @@
 "use client";
 import { motion } from "framer-motion";
 import NeuralBackground from "@/app/components/ui/flow-bg";
+import { Button } from "@/app/components/ui/button";
 
 export default function WishlistFormPage() {
   return (
-    <div className="bg-black mt-8">
+    <div className="bg-black w-screen h-screen">
+      <div className="fixed top-0 left-0 w-full z-[100] bg-indigo-600 text-white py-2 text-center text-sm font-medium">
+        <span>We have a testnet sandbox ready for you to explore! </span>
+        <a href="/dashboard" className="underline hover:text-indigo-200 ml-1">
+          Try the Dashboard
+        </a>
+      </div>
         <motion.div 
           className="absolute inset-0"
           initial={{ opacity: 0 }}
@@ -24,7 +31,7 @@ export default function WishlistFormPage() {
           />
         </motion.div>
 
-      <section className="relative w-full overflow-hidden mt-7">
+      <section className="relative w-full h-full flex flex-col items-center justify-center overflow-hidden mt-7">
         <h1 className="mt-4 mb-8   py-8 relative z-10 bg-gradient-to-b from-white to-muted bg-clip-text text-center text-4xl font-medium tracking-tight text-transparent md:text-7xl">Join Waitlist</h1>
 
         <div className=" py-20  z-10 flex items-center justify-center  -mt-20">
