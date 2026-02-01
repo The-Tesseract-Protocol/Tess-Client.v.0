@@ -149,7 +149,7 @@ export default function TransactionHistory() {
   }
 
   return (
-    <div className="space-y-4 overflow-y-auto scrollbar-hide min-h-[500px] overflow-x-hidden max-h-[500px]">
+    <div className="space-y-4 overflow-y-auto scrollbar-hide overflow-x-hidden w-full h-full ">
       {/* Tabs */}
       <div className="flex gap-1">
         <button

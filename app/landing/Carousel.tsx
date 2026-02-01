@@ -1,14 +1,14 @@
 const investors = [
-  { type: 'text', name: 'LONGHASH VENTURES' },
-  { type: 'text', name: 'JUMP' },
-  { type: 'name', name: 'Anatoly Yakovenko' },
-  { type: 'text', name: 'COINBASE VENTURES' },
-  { type: 'text', name: 'GREENFIELD' },
-  { type: 'name', name: 'Balaji Srinivasan' },
-  { type: 'text', name: 'NGC VENTURES' },
-  { type: 'name', name: 'Keone Hon' },
-  { type: 'text', name: 'L2IV' },
-  { type: 'name', name: 'Mert Mumtaz' },
+  { type: 'text', name: 'GLOBAL PAYROLL' },
+  { type: 'text', name: 'NEOBANKS' },
+  { type: 'name', name: 'NGO Relief Funds' },
+  { type: 'text', name: 'GIG ECONOMY APPS' },
+  { type: 'text', name: 'LOGISTICS CHAINS' },
+  { type: 'name', name: 'Corporate Treasury' },
+  { type: 'text', name: 'TRADE FINANCE' },
+  { type: 'name', name: 'B2B Marketplaces' },
+  { type: 'text', name: 'FINTECH AGGREGATORS' },
+  { type: 'name', name: 'Human Capital Firms' },
 ];
 
 export const InvestorCarousel = () => {

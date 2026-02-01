@@ -139,7 +139,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
   const isProcessing = ['generating', 'building', 'signing', 'submitting', 'notifying'].includes(status);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Token Selection */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">
@@ -154,7 +154,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
               className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 token === key
                   ? 'border-blue-500 bg-blue-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                  : 'border-white/10 bg-transparent hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -165,9 +165,6 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
                   </svg>
                 )}
               </div>
-              <p className="text-xs text-white/40 mt-1 text-left">
-                {config.isNative ? 'Native' : 'Contract'} Asset
-              </p>
             </button>
           ))}
         </div>
@@ -185,18 +182,13 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
             disabled={isProcessing}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           />
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">
             {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}
           </span>
         </div>
       </div>
-
-      {/* Info Box */}
-     
-
-      {/* Generated HashLN Display */}
      
 
       {/* Status Message */}
@@ -260,7 +252,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
         disabled={!isConnected || !amount || isProcessing}
         className={`w-full py-4 rounded-xl font-semibold transition-all ${
           !isConnected || !amount || isProcessing
-            ? 'bg-white/10 text-white/30 cursor-not-allowed'
+            ? 'bg-white/5 text-white/30 cursor-not-allowed'
             : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white'
         }`}
       >
