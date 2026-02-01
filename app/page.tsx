@@ -7,6 +7,7 @@ import Navbar from "./landing/Navbar";
 import OverviewSection from "./landing/OverSection";
 import Footer from './landing/Footer';
 import Reviews from './landing/Reviews';
+import TestimonialsSection from './landing/testimonial';
 
 export default function Home() {
   return (
@@ -28,7 +29,7 @@ export default function Home() {
 
         <Features />
 
-        <Reviews/>
+        <TestimonialsSection/>
         <Footer />
 
 

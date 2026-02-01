@@ -9,6 +9,7 @@ export interface WaitlistServiceConfig {
 
 export interface WaitlistServiceResponse {
         name: string;
+        institutionName: string;
 
     comment: string;
    

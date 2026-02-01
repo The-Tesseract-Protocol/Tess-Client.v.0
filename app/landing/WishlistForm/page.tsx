@@ -8,6 +8,7 @@ export default function WishlistFormPage() {
     name: "",
     email: "",
     institutionName: "",
+    websiteURL: "",
     description: "",
     comment: "",
   });
@@ -36,6 +37,7 @@ export default function WishlistFormPage() {
           name: "",
           email: "",
           institutionName: "",
+          websiteURL: "",
           description: "",
           comment: "",
         });
@@ -102,7 +104,7 @@ export default function WishlistFormPage() {
               <input
                 type="text"
                 name="name"
-                placeholder="Your Name"
+                placeholder="Name"
                 value={formData.name}
                 onChange={handleChange}
                 required
@@ -111,7 +113,7 @@ export default function WishlistFormPage() {
               <input
                 type="email"
                 name="email"
-                placeholder="Your Working Email"
+                placeholder="Working Email"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -122,6 +124,15 @@ export default function WishlistFormPage() {
                name="institutionName"
                placeholder ="Your Institution Name"
                value={formData.institutionName}
+               onChange={handleChange}
+               required
+               className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none backdrop-blur-sm"
+              />
+              <input
+               type="text"
+               name="websiteURL"
+               placeholder ="Your Institution Website URL"
+               value={formData.websiteURL}
                onChange={handleChange}
                required
                className="w-full rounded-xl border border-white/20 bg-white/5 px-4 py-3 text-white placeholder:text-white/50 focus:border-white/40 focus:outline-none backdrop-blur-sm"
