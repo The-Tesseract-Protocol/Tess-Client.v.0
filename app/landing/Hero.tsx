@@ -23,7 +23,7 @@ const Hero = () => {
           <h1 className={`text-6xl font-bold ${lexendTera.className}`}>
             We&apos;re Building
             <br />
-            <span className="text-glow">4D Privacy</span>
+<span className="text-glow">Institutional Privacy</span>
           </h1>
           <p className="mt-4 text-lg text-white/80">
             Confidential Payments | Bulk Settlements
@@ -31,9 +31,7 @@ const Hero = () => {
         </div>
         <div className="absolute bottom-24 right-16 text-right max-w-sm pointer-events-auto">
           <p className="text-lg text-white/80">
-            Make payments on Stellar without exposing who you pay. Settle on-chain with full finality — your operations stay confidential.
-          </p>
-          <div className="flex gap-x-4 mt-8 justify-end">
+Tesseract is Stellar’s institutional layer for private execution and public settlement with mathematical proof.</p>          <div className="flex gap-x-4 mt-8 justify-end">
             <Button
               variant="outline"
               className="flex items-center gap-x-2"

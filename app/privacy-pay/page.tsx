@@ -168,10 +168,7 @@ Privacy          </span>
                 <TransactionHistory />
               </div>
 
-              {/* Info Card */}
              
-
-              {/* Current Limits */}
               
             </div>
           </div>

@@ -244,7 +244,7 @@ function BatchPaymentsContent() {
     // Button shows loading until BOTH transaction completes AND visualization animation finishes
     // This ensures synchronized completion experience
     const isProcessing = isTransactionInProgress ||
-        (txStatus.state === 'success' );
+        (txStatus.state === 'success' && !isVisualizationComplete);
 
     const canSubmit = validRecipients.length > 0 && walletState.isConnected && !isProcessing;
 
@@ -450,9 +450,7 @@ Batch Payment          </span>
                                         >
                                             View on Stellar Expert →
                                         </a>
-                                        <p className="text-xs text-white/40 mt-2 font-mono">
-                                            TX: {txStatus.hash}
-                                        </p>
+                                       
                                     </div>
                                 )}
                                 {(txStatus.state === 'error' || txStatus.state === 'success') && (

@@ -40,7 +40,7 @@ export const OverviewSection = () => {
               />
             </div>
             
-            {/* Secondary Circle - Partial */}
+            
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ export default function Dashboard() {
       <IsoLevelWarp 
         // Cyber-Violet Color
         color="100, 50, 250" 
-        density={50} 
+        density={100} 
         speed={1.5}
       />
       {/* Navigation */}
@@ -26,7 +26,7 @@ export default function Dashboard() {
       </nav>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-start px-4 md:px-8 font-space pt-28 pb-8 mt-8">
+      <div className="flex flex-col items-center justify-center min-h-screen px-4 md:px-8 font-space">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-6 drop-shadow-2xl">
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-muted font-mono">
 Choose your Path
@@ -34,7 +34,7 @@ Choose your Path
           
         </h1>
         {/* Cards Container */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full mt-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl w-full mt-9">
           {/* Batch Payments Card */}
           <button
             onClick={() => router.push('/batch-payments')}

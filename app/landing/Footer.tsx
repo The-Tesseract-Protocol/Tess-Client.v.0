@@ -1,8 +1,12 @@
 const Footer = () => {
     return (
-        <div className="bg-black text-white p-8 min-h-screen flex flex-col items-center justify-center relative">
+        <div className=" text-white  min-h-screen flex flex-col items-center justify-center relative">
+
+            <img src="/TesseractBg.jpg" className="min-w-screen min-h-screen z-0 relative" />
+            <div className="absolute inset-0 bg-black/70 z-10" />
             {/* Main Title */}
-            <div className="flex flex-col items-center gap-8 text-center">
+            {/* Overlay content */}
+            <div className="flex flex-col items-center gap-8 text-center z-20 absolute inset-0 justify-center">
                 <h1 className="text-[6rem] md:text-[9rem] font-bold tracking-tight">TESSERACT</h1>
                 <p className="text-white/60 text-lg md:text-xl max-w-2xl">
                     4D Privacy on a 2D Ledger
@@ -10,7 +14,7 @@ const Footer = () => {
             </div>
 
             {/* Bottom Section */}
-            <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between">
+            <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-20">
                 {/* Left - Built on Stellar */}
                 <div className="flex items-center gap-3 text-white/40 text-sm">
                     <span>Built on</span>

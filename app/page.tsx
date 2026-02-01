@@ -6,6 +6,7 @@ import Hero from "./landing/Hero";
 import Navbar from "./landing/Navbar";
 import OverviewSection from "./landing/OverSection";
 import Footer from './landing/Footer';
+import Reviews from './landing/Reviews';
 
 export default function Home() {
   return (
@@ -13,15 +14,13 @@ export default function Home() {
       <main className="bg-black overflow-x-hidden ">
         <Navbar />
         <Hero />
-        <InvestorCarousel />
         {/* Wrapper for sticky scroll effect between sections */}
         <div className="wrapper ">
           <OverviewSection />
           <Features />
-
-        </div>
-                          <Footer />
-
+          <Reviews />
+          </div>
+      <Footer />
       </main>
     </ReactLenis>
   );
