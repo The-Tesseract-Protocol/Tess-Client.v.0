@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --font-lexend: var(--font-outfit);
+  --font-open-sans: var(--font-anonymous-pro);
+  --font-outfit: var(--font-outfit);
+  --font-lexend: var(--font-lexend-tera);
   
 }
 
@@ -9,7 +11,7 @@
 body {
   background: #000;
   color: #fff;
-  font-family: var(--font-lexend), system-ui, sans-serif;
+  font-family: var(--font-open-sans);
 }
 
 .text-glow {
