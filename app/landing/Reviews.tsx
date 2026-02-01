@@ -1,24 +1,40 @@
-'use client';
 import { TestimonialsColumn } from "@/app/components/ui/testimonials-columns";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getWaitlist, WaitlistServiceResponse } from "@/app/services/waitlistService";
+import { createAvatar } from '@dicebear/core';
+import { pixelArt } from '@dicebear/collection';
 
 const Reviews = () => {
-    const [reviews] = useState(() => {
-        if (typeof window !== 'undefined') {
-            const wishlist = localStorage.getItem('wishlist');
-            if (wishlist) {
-                const wishlistItems = JSON.parse(wishlist);
-                return wishlistItems.map((item: { name: string; description: string; }) => ({
-                    text: item.description,
-                    image: `https://i.pravatar.cc/150?u=${item.name}`,
-                    name: item.name,
-                    role: "Wishlist Member"
-                }));
+    const [reviews, setReviews] = useState<{ text: string; image: string; name: string; role: string; }[]>([]);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const data: WaitlistServiceResponse[] = await getWaitlist();
+                const mappedReviews = data.map((item) => {
+                    const avatar = createAvatar(pixelArt, {
+                        seed: item.name,
+                    });
+                    const svg = avatar.toString();
+                    const dataUrl = `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+
+                    return {
+                        text: item.comment,
+                        image: dataUrl,
+                        name: item.name,
+                        role: "Verified User" 
+                    };
+                });
+                console.log("Fetched Reviews:", mappedReviews);
+                setReviews(mappedReviews);
+            } catch (error) {
+                console.error("Failed to fetch reviews:", error);
             }
-        }
-        return [];
-    });
+        };
+
+        fetchReviews();
+    }, []);
 
     const firstColumn = reviews.slice(0, Math.ceil(reviews.length / 3));
     const secondColumn = reviews.slice(Math.ceil(reviews.length / 3), Math.ceil(reviews.length / 3) * 2);
