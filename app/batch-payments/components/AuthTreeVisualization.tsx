@@ -163,58 +163,63 @@ export default function AuthTreeVisualization({
 
   // Handle transaction state changes
   useEffect(() => {
-    // Cancel any existing animation
+    // Only react to actual state transitions, not re-renders
+    if (transactionState === lastPhaseRef.current) {
+      return;
+    }
+
+    // Cancel any existing animation before starting new one
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
 
-    // Handle state transitions
-    if (transactionState !== lastPhaseRef.current) {
-      lastPhaseRef.current = transactionState;
+    lastPhaseRef.current = transactionState;
 
-      if (transactionState === 'preparing') {
-        // Start fresh
-        phaseStartTimeRef.current = Date.now();
-        setCurrentPhase('building');
-        animationRef.current = requestAnimationFrame(animateWithinPhase);
-      } else if (transactionState === 'signing') {
-        phaseStartTimeRef.current = Date.now();
-        setCurrentPhase('signing');
-        // Jump to signing min if we're behind
-        setAnimationProgress(prev => Math.max(prev, 0.30));
-        animationRef.current = requestAnimationFrame(animateWithinPhase);
-      } else if (transactionState === 'submitting') {
-        phaseStartTimeRef.current = Date.now();
-        setCurrentPhase('submitting');
-        // Jump to submitting min if we're behind
-        setAnimationProgress(prev => Math.max(prev, 0.50));
-        animationRef.current = requestAnimationFrame(animateWithinPhase);
-      } else if (transactionState === 'success') {
-        // Transaction complete! Start completion animation
-        progressAtCompletionRef.current = animationProgress;
-        completionStartTimeRef.current = Date.now();
-        animationRef.current = requestAnimationFrame(animateToCompletion);
-      } else if (transactionState === 'error') {
-        // Stop animation on error
-        setCurrentPhase('idle');
-      } else if (transactionState === 'idle') {
-        // Reset everything
-        phaseStartTimeRef.current = null;
-        completionStartTimeRef.current = null;
-        progressAtCompletionRef.current = 0;
-        setAnimationProgress(0);
-        setCurrentPhase('idle');
-        setIsVisualizationComplete(false);
-      }
+    if (transactionState === 'preparing') {
+      // Start fresh
+      phaseStartTimeRef.current = Date.now();
+      setCurrentPhase('building');
+      animationRef.current = requestAnimationFrame(animateWithinPhase);
+    } else if (transactionState === 'signing') {
+      phaseStartTimeRef.current = Date.now();
+      setCurrentPhase('signing');
+      // Jump to signing min if we're behind
+      setAnimationProgress(prev => Math.max(prev, 0.30));
+      animationRef.current = requestAnimationFrame(animateWithinPhase);
+    } else if (transactionState === 'submitting') {
+      phaseStartTimeRef.current = Date.now();
+      setCurrentPhase('submitting');
+      // Jump to submitting min if we're behind
+      setAnimationProgress(prev => Math.max(prev, 0.50));
+      animationRef.current = requestAnimationFrame(animateWithinPhase);
+    } else if (transactionState === 'success') {
+      // Transaction complete! Start completion animation
+      progressAtCompletionRef.current = animationProgress;
+      completionStartTimeRef.current = Date.now();
+      animationRef.current = requestAnimationFrame(animateToCompletion);
+    } else if (transactionState === 'error') {
+      // Stop animation on error
+      setCurrentPhase('idle');
+    } else if (transactionState === 'idle') {
+      // Reset everything
+      phaseStartTimeRef.current = null;
+      completionStartTimeRef.current = null;
+      progressAtCompletionRef.current = 0;
+      setAnimationProgress(0);
+      setCurrentPhase('idle');
+      setIsVisualizationComplete(false);
     }
+  }, [transactionState, animateWithinPhase, animateToCompletion, animationProgress]);
 
+  // Cleanup animation on unmount
+  useEffect(() => {
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [transactionState, animateWithinPhase, animateToCompletion, animationProgress]);
+  }, []);
 
   // Fallback: Handle isComplete prop if transactionState isn't being passed
   useEffect(() => {
@@ -263,7 +268,7 @@ export default function AuthTreeVisualization({
   };
 
   return (
-    <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/5 p-6">
+    <div className="bg-transparent backdrop-blur-lg rounded-2xl border border-white/5 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Authorization Tree</h3>
@@ -304,7 +309,7 @@ export default function AuthTreeVisualization({
           {/* Connection Lines */}
           {batches.length > 0 && (
             <div className="relative w-full mt-4 mb-4">
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/20" />
+              <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/5" />
               <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[80%] h-px bg-white/20" />
             </div>
           )}

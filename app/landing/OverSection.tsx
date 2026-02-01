@@ -15,13 +15,18 @@ export const OverviewSection = () => {
               <h2 className="text-lg md:text-xl lg:text-xl font-bold text-white leading-tight mb-8">
                 <AnimatedHeadline text="Break the link between" delay={0} />
                 <br />
-                <AnimatedHeadline text="sender and receiver" delay={200} />
+                <AnimatedHeadline text="intent and settlement" delay={200} />
               </h2>
               <p className="text-white/80 text-sm md:text-md max-w-lg leading-relaxed">
-                Every blockchain transaction leaves a trail. Tesseract breaks that
-                pattern — deposit once, pay anyone confidentially. Role-based encryption
-                ensures no single party sees your complete transaction, and on-chain
-                settlement guarantees every payment is accounted for.
+                Every blockchain transaction leaves a trail.
+              </p>
+              <br />
+              <p className="text-white/80 text-sm md:text-md max-w-lg leading-relaxed">
+                We decouple <strong>business intent</strong> from <strong>public finality</strong>.
+                Using a split-knowledge architecture, Tesseract cryptographically isolates
+                your operational data from the ledger's permanent record. Execute high-velocity
+                payroll, vendor batches etc where your competitors see only math,
+                while your auditors retain full, decrypted visibility.
               </p>
             </div>
           </div>
@@ -40,7 +45,7 @@ export const OverviewSection = () => {
               />
             </div>
             
-            {/* Secondary Circle - Partial */}
+            
           </div>
         </div>
       </div>

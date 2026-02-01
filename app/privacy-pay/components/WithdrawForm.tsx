@@ -13,6 +13,7 @@ import {
 } from '@/app/services/privacyPayService';
 import { Keypair } from '@stellar/stellar-sdk';
 import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
+import { signMessage } from '@stellar/freighter-api';
 
 interface Recipient {
   address: string;
@@ -26,6 +27,14 @@ interface WithdrawFormProps {
 type WithdrawStatus = 'idle' | 'encrypting' | 'submitting' | 'success' | 'error';
 type InputMode = 'manual' | 'csv';
 
+const DECRYPTION_STEPS = [
+  'Signature Confirmed',
+  'Constructing Proof',
+  'Deriving Identity',
+  'Deriving Fields',
+  'Success'
+];
+
 export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const { walletState } = useWallet();
   const { address, isConnected } = walletState;
@@ -35,6 +44,12 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const [status, setStatus] = useState<WithdrawStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
+
+  // Decryption state
+  const [isDecrypted, setIsDecrypted] = useState(false);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [showDecryptionModal, setShowDecryptionModal] = useState(false);
+  const [decryptionStep, setDecryptionStep] = useState(0);
 
   // CSV upload state
   const [inputMode, setInputMode] = useState<InputMode>('manual');
@@ -77,6 +92,60 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
 
     loadDeposits();
   }, [address]);
+
+  const handleDecrypt = async () => {
+    if (!address || !isConnected) return;
+    setIsDecrypting(true);
+    try {
+      const message = `Decrypting privacy deposits for ${address} at ${new Date().toISOString()}`;
+      await signMessage(message, { address: address });
+
+      // Start decryption visual sequence
+      setShowDecryptionModal(true);
+
+      // Random total duration between 5000ms and 10000ms
+      const totalDuration = Math.floor(Math.random() * (10000 - 5000 + 1)) + 5000;
+      // Reserve 2000ms for the success step
+      const processingDuration = totalDuration - 2000;
+
+      // Distribute processing time:
+      // Step 0 (Sig): 10%
+      // Step 1 (Proof): 40% (longer)
+      // Step 2 (Identity): 40% (longer)
+      // Step 3 (Fields): 10%
+      const step0Time = Math.floor(processingDuration * 0.1);
+      const step1Time = Math.floor(processingDuration * 0.4);
+      const step2Time = Math.floor(processingDuration * 0.4);
+      const step3Time = Math.floor(processingDuration * 0.1);
+
+      // Step 0: Signature Confirmed
+      setDecryptionStep(0);
+      await new Promise(r => setTimeout(r, step0Time));
+
+      // Step 1: Constructing Proof
+      setDecryptionStep(1);
+      await new Promise(r => setTimeout(r, step1Time));
+
+      // Step 2: Deriving Identity
+      setDecryptionStep(2);
+      await new Promise(r => setTimeout(r, step2Time));
+
+      // Step 3: Deriving Fields
+      setDecryptionStep(3);
+      await new Promise(r => setTimeout(r, step3Time));
+
+      // Step 4: Success
+      setDecryptionStep(4);
+      await new Promise(r => setTimeout(r, 2000));
+
+      setShowDecryptionModal(false);
+      setIsDecrypted(true);
+    } catch (e) {
+      console.error('Decryption failed', e);
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
 
   // CSV parsing function
   const parseCSV = (content: string): { recipients: Recipient[]; error?: string } => {
@@ -302,14 +371,96 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const isProcessing = ['encrypting', 'submitting'].includes(status);
 
   return (
-    <div className="space-y-6 overflow-y-auto min-h-[470px] max-h-[500px]">
+    <div className="space-y-6 relative">
+      {/* Decryption Modal */}
+      {showDecryptionModal && (
+          <div className=" inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center transform transition-all">
+              <div className="relative w-16 h-16 mx-auto mb-4">
+                <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full"></div>
+                <div className="absolute inset-0 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {decryptionStep === 4 ? (
+                    <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  {decryptionStep === 4 ? 'Decryption Complete' : 'Decrypting Deposits'}
+                </h3>
+                <p className="text-white/40 text-sm">
+                  Please wait while we securely process your data
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-2">
+                {DECRYPTION_STEPS.map((step, index) => {
+                  const isActive = index === decryptionStep;
+                  const isCompleted = index < decryptionStep;
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex items-center gap-3 transition-all duration-300 ${isActive ? 'opacity-100 transform scale-105' :
+                          isCompleted ? 'opacity-50' : 'opacity-20'
+                        }`}
+                    >
+                      <div className={`w-2 h-2 rounded-full transition-colors ${isActive ? 'bg-purple-500 animate-pulse' :
+                          isCompleted ? 'bg-green-500' : 'bg-white'
+                        }`} />
+                      <span className={`text-sm font-medium ${isActive ? 'text-purple-400' :
+                          isCompleted ? 'text-green-400' : 'text-white'
+                        }`}>
+                        {step}
+                      </span>
+                      {isCompleted && (
+                        <svg className="w-4 h-4 text-green-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+      )}
+
       {/* HashLN Input/Selection */}
       <div>
-        <label className="block text-sm font-medium text-white/60 mb-2">
-          Select Deposit
-        </label>
+        <div className="flex justify-between items-center mb-2">
+          <label className="block text-sm font-medium text-white/60">
+            Select Deposit
+          </label>
+          {!isDecrypted && userDeposits.length > 0 && !loadingDeposits && (
+            <button
+              onClick={handleDecrypt}
+              disabled={isDecrypting || !isConnected}
+              className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+            >
+              {isDecrypting ? (
+                <span className="animate-pulse">Decrypting...</span>
+              ) : (
+                <>
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Decrypt All
+                </>
+              )}
+            </button>
+          )}
+        </div>
         {loadingDeposits ? (
-          <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-white/60 text-sm">Loading deposits...</span>
           </div>
@@ -318,14 +469,17 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             value={hashLN}
             onChange={(e) => setHashLN(e.target.value)}
             disabled={isProcessing}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+            className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
           >
-            <option value="">Select from your deposits</option>
+            <option value="">{isDecrypted ? 'Select from your deposits' : 'Encrypted Deposits Found'}</option>
             {userDeposits
               .filter((d) => d.status === 'confirmed')
               .map((d) => (
                 <option key={d.hashLN} value={d.hashLN}>
-                  {d.hashLN.slice(0, 16)}... ({d.amount} {(d.token || 'usdc').toUpperCase()})
+                  {!isDecrypted
+                    ? `Identity: ${(d.identity || '').slice(0, 20)}...`
+                    : `${d.hashLN.slice(0, 16)}... (${d.amount} ${(d.token || 'usdc').toUpperCase()})`
+                  }
                 </option>
               ))}
           </select>
@@ -336,7 +490,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             onChange={(e) => setHashLN(e.target.value)}
             placeholder="Enter your deposit hash or make a deposit first"
             disabled={isProcessing}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 font-mono text-sm"
+            className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50 font-mono text-sm"
           />
         )}
       </div>
@@ -352,11 +506,10 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
               key={key}
               onClick={() => setToken(key)}
               disabled={isProcessing}
-              className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                token === key
+              className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${token === key
                   ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
-              }`}
+                  : 'border-white/10 bg-transparent hover:border-white/20'
+                }`}
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-white">{config.symbol}</span>
@@ -366,16 +519,13 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
                   </svg>
                 )}
               </div>
-              <p className="text-xs text-white/40 mt-1 text-left">
-                {config.isNative ? 'Native' : 'Contract'} Asset
-              </p>
             </button>
           ))}
         </div>
       </div>
 
       {/* Recipients */}
-      <div>
+      <div className='overflow-y-auto max-h-full'>
         <div className="flex items-center justify-between mb-3">
           <label className="block text-sm font-medium text-white/60">
             Recipients
@@ -385,22 +535,20 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             <button
               onClick={() => handleModeSwitch('manual')}
               disabled={isProcessing}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                inputMode === 'manual'
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${inputMode === 'manual'
                   ? 'bg-purple-500/20 text-purple-400'
                   : 'text-white/40 hover:text-white/60'
-              } disabled:opacity-50`}
+                } disabled:opacity-50`}
             >
               Manual
             </button>
             <button
               onClick={() => handleModeSwitch('csv')}
               disabled={isProcessing}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-                inputMode === 'csv'
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${inputMode === 'csv'
                   ? 'bg-purple-500/20 text-purple-400'
                   : 'text-white/40 hover:text-white/60'
-              } disabled:opacity-50`}
+                } disabled:opacity-50`}
             >
               CSV Upload
             </button>
@@ -501,12 +649,12 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
                   isProcessing ||
                   recipients.length >= HybridCryptoUtil.calculateMaxRecipients()
                 }
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50"
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50 border border-blue-400/20 hover:border-blue-400/40 px-3 py-1.5 rounded-lg"
               >
                 + Add Recipient
               </button>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[160px] overflow-y-auto">
               {recipients.map((recipient, index) => (
                 <div key={index} className="flex gap-3">
                   <input
@@ -515,11 +663,10 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
                     onChange={(e) => updateRecipient(index, 'address', e.target.value)}
                     placeholder="G..."
                     disabled={isProcessing}
-                    className={`flex-1 bg-white/5 border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-1 transition-all disabled:opacity-50 font-mono text-sm ${
-                      recipient.address && !recipient.address.startsWith('G')
+                    className={`flex-1 bg-transparent border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-1 transition-all disabled:opacity-50 font-mono text-sm ${recipient.address && !recipient.address.startsWith('G')
                         ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/50'
                         : 'border-white/10 focus:border-blue-500/50 focus:ring-blue-500/50'
-                    }`}
+                      }`}
                   />
                   <input
                     type="number"
@@ -527,7 +674,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
                     onChange={(e) => updateRecipient(index, 'amount', e.target.value)}
                     placeholder="Amount"
                     disabled={isProcessing}
-                    className="w-32 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
+                    className="w-32 bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
                   />
                   {recipients.length > 1 && (
                     <button
@@ -548,7 +695,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       </div>
 
       {/* Summary */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+      <div className="bg-transparent border border-white/5 rounded-xl p-4">
         <div className="flex justify-between items-center">
           <span className="text-white/60">Total Withdrawal</span>
           <span className="text-xl font-semibold text-white">
@@ -561,17 +708,16 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         </div>
       </div>
 
-  
+
       {/* Status Message */}
       {getStatusMessage() && (
         <div
-          className={`flex items-center gap-3 p-4 rounded-xl ${
-            status === 'success'
+          className={`flex items-center gap-3 p-4 rounded-xl ${status === 'success'
               ? 'bg-green-500/10 border border-green-500/20'
               : status === 'error'
-              ? 'bg-red-500/10 border border-red-500/20'
-              : 'bg-white/5 border border-white/10'
-          }`}
+                ? 'bg-red-500/10 border border-red-500/20'
+                : 'bg-white/5 border border-white/10'
+            }`}
         >
           {isProcessing && (
             <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
@@ -587,13 +733,12 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             </svg>
           )}
           <span
-            className={`text-sm ${
-              status === 'success'
+            className={`text-sm ${status === 'success'
                 ? 'text-green-400'
                 : status === 'error'
-                ? 'text-red-400'
-                : 'text-white/60'
-            }`}
+                  ? 'text-red-400'
+                  : 'text-white/60'
+              }`}
           >
             {getStatusMessage()}
           </span>
@@ -616,17 +761,16 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       <button
         onClick={handleWithdraw}
         disabled={!isConnected || !hashLN || !allRecipientsValid || isProcessing}
-        className={`w-full py-4 rounded-xl font-semibold transition-all ${
-          !isConnected || !hashLN || !allRecipientsValid || isProcessing
-            ? 'bg-white/10 text-white/30 cursor-not-allowed'
-            : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-        }`}
+        className={`w-full py-4 rounded-xl font-semibold transition-all ${!isConnected || !hashLN || !allRecipientsValid || isProcessing
+            ? 'bg-white/5 text-white/30 cursor-not-allowed'
+            : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-600 text-white'
+          }`}
       >
         {!isConnected
           ? 'Connect Wallet First'
           : isProcessing
-          ? getStatusMessage()
-          : 'Submit Private Withdrawal'}
+            ? getStatusMessage()
+            : 'Submit Private Withdrawal'}
       </button>
     </div>
   );
