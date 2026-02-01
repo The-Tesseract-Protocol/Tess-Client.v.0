@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
-2:I[47257,["/_next/static/chunks/2f236954d6a65e12.js"],"ClientPageRoot"]
-3:I[91089,["/_next/static/chunks/d33adc50699e43e1.js","/_next/static/chunks/ee8f91895a95a7f7.js","/_next/static/chunks/80df870c2f6bad44.js"],"default"]
-6:I[97367,["/_next/static/chunks/2f236954d6a65e12.js"],"OutletBoundary"]
+2:I[5592,["/_next/static/chunks/567407edb72fd22c.js"],"ClientPageRoot"]
+3:I[23014,["/_next/static/chunks/0a4bd7a1a05493e9.js","/_next/static/chunks/bca4b580b3c88964.js","/_next/static/chunks/91f9eed3aad2a53f.js","/_next/static/chunks/e09811c936ffd2b6.js"],"default"]
+6:I[58641,["/_next/static/chunks/567407edb72fd22c.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"buildId":"N72fyulP2WxwFc4ANcjFL","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/d33adc50699e43e1.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/ee8f91895a95a7f7.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/80df870c2f6bad44.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"57RiJoFQ4QSegaTn-tAJV","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/_next/static/chunks/0a4bd7a1a05493e9.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/bca4b580b3c88964.js","async":true}],["$","script","script-2",{"src":"/_next/static/chunks/91f9eed3aad2a53f.js","async":true}],["$","script","script-3",{"src":"/_next/static/chunks/e09811c936ffd2b6.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
