@@ -20,17 +20,18 @@ function PrivacyPayContent() {
 
   return (
 
-    <section className='w-screen h-screen'>
+    <section className=''>
 
       <NeuralBackground
         color="#818cf8" // Indigo-400
         trailOpacity={0.1} // Lower = longer trails
         speed={0.8}
       />
-      <div className="min-h-screen absolute top-0 text-white font-mono flex flex-col items-center justify-center w-full">
+      
+      <div className="min-h-screen absolute top-0 text-white font-mono flex flex-col items-center justify-center w-full p-20">
     
         {/* Navigation */}
-        <nav className="w-full flex items-center justify-between py-6 px-8 md:px-16 fixed top-0 left-0 z-50 backdrop-blur-lg bg-black/60 border-b border-white/5">
+        <nav className="w-full flex items-center justify-between py-6 px-8 md:px-16 fixed top-0 left-0 z-50 backdrop-blur-sm bg-transparent">
           <div className="flex items-center gap-x-4">
             <a href="/dashboard" className="flex items-center gap-2 text-white/80 hover:text-white transition-colors">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,8 +68,8 @@ function PrivacyPayContent() {
         </nav>
 
         {/* Main Content */}
-        <div className="pt-20 px-4 md:px-8 font-mono">
-          <div className="max-w-5xl mx-auto">
+        <div className="px-4 md:px-8 font-mono max-w-7xl mx-auto">
+          <div className="mx-auto">
             {/* Header */}
             <div className="text-center mb-8 mt-8">
 
@@ -84,9 +85,9 @@ function PrivacyPayContent() {
             </div>
 
             {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="flex flex-row gap-5 max-w-5xl mx-auto">
               {/* Left Column - Forms */}
-              <div className="lg:col-span-2 space-y-4">
+              <div className="space-y-4 max-w-3xl min-w-xl">
                 {/* Tab Switcher */}
                 <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
                   <HoverButton
@@ -116,67 +117,25 @@ function PrivacyPayContent() {
                 </div>
 
                 {/* Form Card */}
-                <div className=" backdrop-blur-lg border border-white/10 rounded-2xl p-6 ">
+                <div className=" backdrop-blur-lg border border-white/10 rounded-2xl p-6  ">
                   {activeTab === 'deposit' ? (
                     <DepositForm />
                   ) : (
                     <WithdrawForm />
                   )}
                 </div>
-
-                {/* How It Works */}
-                {activeTab === 'deposit' && <div className="bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
-                  <h3 className={`text-lg font-semibold mb-4 `}>
-                    How Privacy Pay Works
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center text-center p-4 bg-white/5 rounded-xl">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mb-3">
-                        <span className="text-blue-400 font-bold">1</span>
-                      </div>
-                      <h4 className="font-medium mb-1">Deposit</h4>
-                      <p className="text-sm text-white/50">
-                        Funds are linked to a unique hash, not your address
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center text-center p-4 bg-white/5 rounded-xl">
-                      <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mb-3">
-                        <span className="text-purple-400 font-bold">2</span>
-                      </div>
-                      <h4 className="font-medium mb-1">Encrypt</h4>
-                      <p className="text-sm text-white/50">
-                        Withdrawal details are encrypted end-to-end
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center text-center p-4 bg-white/5 rounded-xl">
-                      <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
-                        <span className="text-green-400 font-bold">3</span>
-                      </div>
-                      <h4 className="font-medium mb-1">Withdraw</h4>
-                      <p className="text-sm text-white/50">
-                        Recipients receive funds privately
-                      </p>
-                    </div>
-                  </div>
-                </div>}
+                
               </div>
 
-              {/* Right Column - History */}
-              <div className="space-y-4">
-                <div className="bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
-                  <h3 className={`text-md font-semibold mb-4`}>
+            <div className="space-y-4 max-w-2xl min-w-lg flex flex-col justify-center ">
+              <div className="bg-transparent backdrop-blur-md border border-white/5 rounded-2xl p-6">
+                <h3 className={`text-md font-semibold mb-4`}>
 
-                    Your Activity
-                  </h3>
-                  <TransactionHistory />
-                </div>
-
-                {/* Info Card */}
-
-
-                {/* Current Limits */}
-
+                  Your Activity
+                </h3>
+                <TransactionHistory />
               </div>
+            </div>
             </div>
           </div>
         </div>
