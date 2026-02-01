@@ -20,15 +20,16 @@ function PrivacyPayContent() {
 
   return (
 
-    <section className=''>
+    <div className='min-h-screen'>
 
       <NeuralBackground
+        className='min-h-screen top-0'
         color="#818cf8" // Indigo-400
         trailOpacity={0.1} // Lower = longer trails
         speed={0.8}
       />
-      
-      <div className="min-h-screen absolute top-0 text-white font-mono flex flex-col items-center justify-center w-full p-20">
+
+      <div className="absolute min-h-screen top-0 text-white font-mono flex flex-col items-center justify-center w-full p-20">
     
         {/* Navigation */}
         <nav className="w-full flex items-center justify-between py-6 px-8 md:px-16 fixed top-0 left-0 z-50 backdrop-blur-sm bg-transparent">
@@ -80,7 +81,7 @@ function PrivacyPayContent() {
 
               </h1>
               <p className="text-xs md:text-sm lg:text-md font-italic tracking-tighter text-white/46 mb-6 drop-shadow-2xl">
-                Deposit and withdraw funds with complete privacy. Your transaction details are encrypted and hidden from the public ledger.
+                Deposit and withdraw funds with complete privacy. Your transaction details are encrypted and your operations are end to end encrypted.
               </p>
             </div>
 
@@ -140,7 +141,7 @@ function PrivacyPayContent() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

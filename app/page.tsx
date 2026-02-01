@@ -11,11 +11,12 @@ import Reviews from './landing/Reviews';
 export default function Home() {
   return (
     <ReactLenis root>
-      <main className="bg-black overflow-x-hidden ">
+      <main className="bg-black overflow-x-hidden h-screen w-screen">
+       
         <Navbar />
         <Hero />
         {/* Wrapper for sticky scroll effect between sections */}
-        <div className="wrapper ">
+        <div className="h-screen">
           <OverviewSection />
           <Features />
           <Reviews />

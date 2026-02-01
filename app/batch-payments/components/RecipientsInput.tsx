@@ -258,7 +258,7 @@ export default function RecipientsInput({
         </div>
 
         {/* Table Body */}
-        <div className="max-h-[320px] min-h-[200px] overflow-y-auto">
+        <div className="h-[200px] overflow-y-auto">
           {recipients.map((recipient, index) => (
             <div
               key={recipient.id}
@@ -329,7 +329,7 @@ export default function RecipientsInput({
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 p-4 bg-white/5 rounded-xl">
+      <div className="grid grid-cols-3 gap-4 p-4 bg-white/2 rounded-xl">
         <div>
           <div className="text-xs text-white/40 mb-1">Valid Recipients</div>
           <div className="text-lg font-semibold text-white">
