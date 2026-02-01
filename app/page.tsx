@@ -20,7 +20,7 @@ export default function Home() {
           <Features />
 
         </div>
-                          <Footer />
+        <Footer />
 
       </main>
     </ReactLenis>

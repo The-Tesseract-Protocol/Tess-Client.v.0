@@ -1,32 +1,37 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import Background from '@/app/components/ui/background-snippet';
-import IsoLevelWarp from '../components/ui/isometric-ui';
+// import Background from '@/app/components/ui/background-snippet';
+// import IsoLevelWarp from '../components/ui/isometric-ui';
+import NeuralBackground from '../components/ui/flow-field-background';
 
 export default function Dashboard() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen  text-white">
-      <IsoLevelWarp 
-        // Cyber-Violet Color
-        color="100, 50, 250" 
-        density={50} 
-        speed={1.5}
+    <section className='w-screen h-screen'>
+    
+      <NeuralBackground
+        color="#818cf8" // Indigo-400
+        trailOpacity={0.1} // Lower = longer trails
+        speed={0.8}
       />
-      {/* Navigation */}
-      <nav className="w-full flex items-center justify-between py-8 px-16 fixed top-0 left-0 z-50">
+
+      <nav className="w-full flex items-center justify-between py-8 px-16 fixed top-0 left-0 z-200">
         <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden">
           <a href="/" className="text-white/80 hover:text-white transition-colors mr-2">
-            <img src="/Tess_BW.svg" alt="Tesseract Logo" className="h-8 w-8 mr-1 inline-block rounded-2xl font-mono" />
+            <img src="/Tess-W.png" alt="Tesseract Logo" className="h-8 w-8 mr-1 inline-block rounded-2xl font-mono" />
             TESSERACT
           </a>
         </div>
       </nav>
 
+
+    <div className="min-h-screen absolute z-100 top-0 text-white flex flex-row items-center justify-center w-full">
+    
+    
       {/* Main Content */}
-      <div className="flex flex-col items-center justify-start px-4 md:px-8 font-space pt-28 pb-8 mt-8">
+      <div className="flex flex-col items-center justify-center px-4 md:px-8 font-space pt-28 pb-8 mt-8 ">
         <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-6 drop-shadow-2xl">
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-muted font-mono">
 Choose your Path
@@ -57,10 +62,10 @@ Choose your Path
             {/* Content */}
             <div className="relative mt-9 font-mono ">
               <h2 className={`text-xl font-semibold mb-2 `}>
-                Batch Payments
+                Experince Batch Authorisation (AUTH TREE)
               </h2>
               <p className="text-white/60 mb-4 text-sm">
-                Pay up to 80 recipients in a single transaction with just one signature. Fast, efficient, and atomic.
+                Pay up to 80 recipients in a single transaction with just one signature.
               </p>
 
               {/* Features */}
@@ -69,7 +74,7 @@ Choose your Path
                   <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Single signature for all payments
+                  Single signature for all operations
                 </div>
                 <div className="flex items-center gap-2 text-xs text-white/50">
                   <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -128,13 +133,13 @@ Choose your Path
                   <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Encrypted recipient list
+                  End-to-End encryption
                 </div>
                 <div className="flex items-center gap-2 text-xs text-white/50">
                   <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
-                  Confidential amounts
+                  Confidentiality On-Chain
                 </div>
                 <div className="flex items-center gap-2 text-xs text-white/50">
                   <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -156,9 +161,10 @@ Choose your Path
 
         {/* Network Indicator */}
         <div className="mt-8 flex items-center gap-2 text-sm text-white/40 z-10 font-mono">
-          <span>Connected to Stellar Testnet</span>
+          <span>Sandbox on Stellar Testnet</span>
         </div>
       </div>
-    </div>
+      </div>
+    </section>
   );
 }

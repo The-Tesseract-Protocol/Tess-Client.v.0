@@ -258,7 +258,7 @@ export default function RecipientsInput({
         </div>
 
         {/* Table Body */}
-        <div className="max-h-[320px] overflow-y-auto">
+        <div className="max-h-[320px] min-h-[200px] overflow-y-auto">
           {recipients.map((recipient, index) => (
             <div
               key={recipient.id}
@@ -369,7 +369,7 @@ export default function RecipientsInput({
         <button
           onClick={clearAll}
           disabled={disabled}
-          className="text-sm text-white/40 hover:text-white transition-colors"
+          className="text-sm text-white/40 hover:text-white/80 transition-colors border border-white/10 px-3 py-1 rounded-lg hover:border-white/40"
         >
           Clear all recipients
         </button>

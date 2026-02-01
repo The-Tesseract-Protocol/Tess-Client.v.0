@@ -330,7 +330,7 @@ const ScrollingFeatureShowcase = () => {
                       <img
                         src={slide.image}
                         alt={slide.title}
-                        className="h-full w-full object-cover"
+                        className="h-[50%] object-contain"
                         onError={(e: SyntheticEvent<HTMLImageElement, Event>) => { 
                           const target = e.target as HTMLImageElement;
                           target.onerror = null; 
