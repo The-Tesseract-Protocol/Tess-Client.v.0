@@ -270,7 +270,7 @@ export default function AuthTreeVisualization({
   return (
     <div className="bg-transparent backdrop-blur-lg rounded-2xl border border-white/5 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white">Authorization Tree</h3>
         <div className="flex items-center gap-2">
           {currentPhase !== 'idle' && currentPhase !== 'complete' && (

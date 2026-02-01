@@ -47,7 +47,7 @@ export function TestimonialsSection() {
 	}, []);
 
 	return (
-		<section className="relative w-full pt-10 pb-20 px-4 mt-4 py-6">
+		<section className="relative w-screen h-screen flex flex-col items-center justify-center overflow-hidden">
 			<div aria-hidden className="absolute inset-0 isolate z-0 overflow-hidden">
 				<div className="bg-[radial-gradient(68.54%_68.72%_at_55.02%_31.46%,rgba(255,255,255,0.06)_0%,rgba(140,140,140,0.02)_50%,rgba(255,255,255,0.01)_80%)] absolute top-0 left-0 h-320 w-140 -translate-y-87.5 -rotate-45 rounded-full" />
 				<div className="bg-[radial-gradient(50%_50%_at_50%_50%,rgba(255,255,255,0.04)_0%,rgba(255,255,255,0.01)_80%,transparent_100%)] absolute top-0 left-0 h-320 w-60 translate-x-[5%] -translate-y-1/2 -rotate-45 rounded-full" />

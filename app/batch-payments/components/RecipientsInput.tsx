@@ -176,7 +176,7 @@ export default function RecipientsInput({
       {/* Mode Toggle and Info */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex bg-white/5 rounded-lg p-1">
+          <div className="flex bg-transparent rounded-lg p-1">
             <button
               onClick={() => setInputMode('manual')}
               className={`px-3 py-1.5 text-sm rounded-md transition-all ${
@@ -189,7 +189,7 @@ export default function RecipientsInput({
               Manual Entry
             </button>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => { setInputMode('csv'); }}
               className={`px-3 py-1.5 text-sm rounded-md transition-all ${
                 inputMode === 'csv'
                   ? 'bg-white/10 text-white'
@@ -208,46 +208,47 @@ export default function RecipientsInput({
       </div>
 
       {/* CSV Drop Zone */}
-      <div
-        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
-          dragActive
-            ? 'border-blue-500 bg-blue-500/10'
-            : 'border-white/20 hover:border-white/30'
-        } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv,.txt"
-          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-          className="hidden"
-          disabled={disabled}
-        />
-
-        <svg className="w-10 h-10 mx-auto mb-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <p className="text-sm text-white/60 mb-1">
-          Drag and drop CSV file here, or{' '}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="text-blue-400 hover:text-blue-300"
+      {inputMode === 'csv' && (
+        <div
+          className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${dragActive
+              ? 'border-blue-500 bg-blue-500/10'
+              : 'border-white/20 hover:border-white/30'
+            } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+            className="hidden"
             disabled={disabled}
-          >
-            browse
-          </button>
-        </p>
-        <p className="text-xs text-white/40">Format: address,amount (amount in XLM)</p>
-      </div>
+          />
+
+          <svg className="w-10 h-10 mx-auto mb-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p className="text-sm text-white/60 mb-1">
+            Drag and drop CSV file here, or{' '}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-blue-400 hover:text-blue-300"
+              disabled={disabled}
+            >
+              browse
+            </button>
+          </p>
+          <p className="text-xs text-white/40">Format: address,amount (amount in XLM)</p>
+        </div>
+      )}
 
       {/* Recipients Table */}
       <div className="bg-black/20 rounded-xl border border-white/10 overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/5 border-b border-white/10">
+        <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/3 border-b border-white/10">
           <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
             Recipient Address
           </div>
@@ -275,7 +276,7 @@ export default function RecipientsInput({
                   value={recipient.address}
                   onChange={(e) => updateRecipient(recipient.id, 'address', e.target.value)}
                   placeholder="G..."
-                  className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:ring-0 ${
+                  className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:ring-0 ${
                     !recipient.isValid && recipient.address ? 'text-red-400' : ''
                   }`}
                   disabled={disabled}
@@ -295,7 +296,7 @@ export default function RecipientsInput({
                 value={recipient.amount}
                 onChange={(e) => updateRecipient(recipient.id, 'amount', e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-transparent border-0 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-0"
+                className="w-full bg-transparent border-0 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-0"
                 disabled={disabled}
               />
 

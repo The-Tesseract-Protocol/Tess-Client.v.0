@@ -335,7 +335,7 @@ function BatchPaymentsContent() {
                     )}
 
                     {/* Right Column - Auth Tree Visualization */}
-                    <div className="space-y-6 bg-gradient-to-br from-white/5 to-muted/10 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
+                    <div className="space-y-6 bg-transparent backdrop-blur-lg rounded-2xl p-6">
 
                         {/* <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/4 p-6">
                             <h3 className="text-lg font-semibold mb-4">How It Works</h3>
@@ -391,8 +391,8 @@ function BatchPaymentsContent() {
                     {/* Content Grid */}
                     <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Left Column - Recipients Input */}
-                        <div className="space-y-6 bg-gradient-to-br from-white/5 to-muted/10 backdrop-blur-lg rounded-2xl border border-white/10 p-6">
-                            <div className="backdrop-blur-lg rounded-2xl  p-6">
+                        <div className="space-y-6 bg-transparent backdrop-blur-sm rounded-2xl border border-white/10 p-1">
+                            <div className=" bg-transparent backdrop-blur-lg rounded-2xl  p-6">
                                 <h2 className="text-lg font-semibold mb-4">Recipients</h2>
                                 <RecipientsInput
                                     recipients={recipients}
@@ -403,7 +403,7 @@ function BatchPaymentsContent() {
 
                             {/* Payment Summary */}
                             {validRecipients.length > 0 && (
-                                <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl space-y-4">
+                                <div className="bg-black/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl space-y-4">
                                     <h2 className="text-lg font-semibold mb-4 text-white/90">Summary</h2>
                                     <div className="space-y-3 text-sm">
                                         <div className="flex justify-between items-center">
@@ -519,7 +519,7 @@ function BatchPaymentsContent() {
 
                         {/* Right Column: Visualization & Info */}
                         <div className="space-y-6">
-                            <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl min-h-[400px]">
+                            <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl">
                                 <AuthTreeVisualization
                                     batches={batchInfo}
                                     isProcessing={isTransactionInProgress}

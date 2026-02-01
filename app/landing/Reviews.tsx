@@ -41,9 +41,8 @@ const Reviews = () => {
     const thirdColumn = reviews.slice(Math.ceil(reviews.length / 3) * 2);
 
   return (
-    <section className="bg-background my-20 relative">
 
-      <div className="container z-10 mx-auto">
+      <div className="flex flex-col items-center justify-center min-h-screen z-10 mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -51,7 +50,6 @@ const Reviews = () => {
           viewport={{ once: true }}
           className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
         >
-          
 
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5 ">
             Users Reviews
@@ -67,7 +65,6 @@ const Reviews = () => {
           <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={17} />
         </div>
       </div>
-    </section>
   );
 };
 
