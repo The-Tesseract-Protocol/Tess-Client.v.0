@@ -1,24 +1,24 @@
 'use client';
 import { TestimonialsColumn } from "@/app/components/ui/testimonials-columns";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Reviews = () => {
-    const [reviews, setReviews] = useState([]);
-
-    useEffect(() => {
-        const wishlist = localStorage.getItem('wishlist');
-        if (wishlist) {
-            const wishlistItems = JSON.parse(wishlist);
-            const newReviews = wishlistItems.map((item: { name: string; description: string; }) => ({
-                text: item.description,
-                image: `https://i.pravatar.cc/150?u=${item.name}`,
-                name: item.name,
-                role: "Wishlist Member"
-            }));
-            setReviews(prevReviews => [...prevReviews, ...newReviews]);
+    const [reviews] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const wishlist = localStorage.getItem('wishlist');
+            if (wishlist) {
+                const wishlistItems = JSON.parse(wishlist);
+                return wishlistItems.map((item: { name: string; description: string; }) => ({
+                    text: item.description,
+                    image: `https://i.pravatar.cc/150?u=${item.name}`,
+                    name: item.name,
+                    role: "Wishlist Member"
+                }));
+            }
         }
-    }, []);
+        return [];
+    });
 
     const firstColumn = reviews.slice(0, Math.ceil(reviews.length / 3));
     const secondColumn = reviews.slice(Math.ceil(reviews.length / 3), Math.ceil(reviews.length / 3) * 2);
@@ -38,7 +38,7 @@ const Reviews = () => {
           
 
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5 ">
-            User's Reviews
+            Users Reviews
           </h2>
           <p className="text-center mt-5 opacity-75 font-mono">
             See what our customers have to say about us.
