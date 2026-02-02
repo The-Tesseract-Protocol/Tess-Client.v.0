@@ -49,14 +49,13 @@ export enum WalletErrorCode {
     NOT_INSTALLED = 'NOT_INSTALLED',
     NOT_ALLOWED = 'NOT_ALLOWED',
     USER_REJECTED = 'USER_REJECTED',
-    NETWORK_MISMATCH = 'NETWORK_MISMATCH',
     SIGNING_FAILED = 'SIGNING_FAILED',
     UNKNOWN = 'UNKNOWN',
 }
 
 // ==================== WALLET SERVICE CLASS ====================
 
-export class WalletService {
+class WalletService {
     private static instance: WalletService;
 
     private constructor() {}

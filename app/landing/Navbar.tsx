@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { Button } from "../components/ui/button";
 import { WishlistModal } from '../components/ui/WishlistModal';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 
 const Navbar = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,10 +30,10 @@ const Navbar = () => {
     <>
     <nav className="w-full flex items-center justify-between py-8 px-16 fixed top-0 left-0 z-50 fixed top-0 w-full ">
       <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden  ">
-        <a href="#" className="text-white/80 hover:text-white transition-colors mr-2">
-        <img src="/Tess-W.png" alt="Tesseract Logo" className="h-8 w-8  mr-1 inline-block rounded-2xl" />
+        <Link href="#" className="text-white/80 hover:text-white transition-colors mr-2 flex items-center">
+        <Image src="/Tess-W.png" alt="Tesseract Logo" width={32} height={32} className="h-8 w-8  mr-1 inline-block rounded-2xl" />
         TESSERACT
-        </a>
+        </Link>
       </div>
       <div className="flex items-center gap-4 backdrop-blur-md bg-black/40 rounded-3xl px-2 py-1">
         <a href="https://tessfi.gitbook.io/docs-tess/" className="px-2">

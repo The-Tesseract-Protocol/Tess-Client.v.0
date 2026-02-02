@@ -33,7 +33,6 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
   const [status, setStatus] = useState<DepositStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const [generatedHashLN, setGeneratedHashLN] = useState<string | null>(null);
   const [showAutoReset, setShowAutoReset] = useState(false);
 
   const handleDeposit = async () => {
@@ -55,7 +54,6 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       const ledgerNumber = await getCurrentLedger();
       const walletNonce = generateWalletNonce();
       const hashLN = await generateHashLN(ledgerNumber, walletNonce);
-      setGeneratedHashLN(hashLN);
 
       // Derive identity for tracking
       const identity = await deriveIdentity(hashLN, address);

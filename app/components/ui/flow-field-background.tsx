@@ -24,6 +24,88 @@ interface NeuralBackgroundProps {
     speed?: number;
 }
 
+// --- PARTICLE CLASS ---
+class Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    age: number;
+    life: number;
+    width: number;
+    height: number;
+
+    constructor(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = 0;
+        this.vy = 0;
+        this.age = 0;
+        // Random lifespan to create natural recycling
+        this.life = Math.random() * 200 + 100;
+    }
+
+    update(mouse: {x: number, y: number}, speed: number) {
+        // 1. Flow Field Math (Simplex-ish noise)
+        // We calculate an angle based on position to create the "flow"
+        const angle = (Math.cos(this.x * 0.005) + Math.sin(this.y * 0.005)) * Math.PI;
+
+        // 2. Add force from flow field
+        this.vx += Math.cos(angle) * 0.2 * speed;
+        this.vy += Math.sin(angle) * 0.2 * speed;
+
+        // 3. Mouse Repulsion/Attraction
+        const dx = mouse.x - this.x;
+        const dy = mouse.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const interactionRadius = 150;
+
+        if (distance < interactionRadius) {
+            const force = (interactionRadius - distance) / interactionRadius;
+            // Push away
+            this.vx -= dx * force * 0.05;
+            this.vy -= dy * force * 0.05;
+        }
+
+        // 4. Apply Velocity & Friction
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= 0.95; // Friction to stop infinite acceleration
+        this.vy *= 0.95;
+
+        // 5. Aging
+        this.age++;
+        if (this.age > this.life) {
+            this.reset();
+        }
+
+        // 6. Wrap around screen
+        if (this.x < 0) this.x = this.width;
+        if (this.x > this.width) this.x = 0;
+        if (this.y < 0) this.y = this.height;
+        if (this.y > this.height) this.y = 0;
+    }
+
+    reset() {
+        this.x = Math.random() * this.width;
+        this.y = Math.random() * this.height;
+        this.vx = 0;
+        this.vy = 0;
+        this.age = 0;
+        this.life = Math.random() * 200 + 100;
+    }
+
+    draw(context: CanvasRenderingContext2D, color: string) {
+        context.fillStyle = color;
+        // Fade in and out based on age
+        const alpha = 1 - Math.abs((this.age / this.life) - 0.5) * 2;
+        context.globalAlpha = alpha;
+        context.fillRect(this.x, this.y, 1.5, 1.5); // Tiny dots are faster than arcs
+    }
+}
+
 export default function NeuralBackground({
     className,
     color = "#6366f1", // Default Indigo
@@ -47,85 +129,7 @@ export default function NeuralBackground({
         let height = container.clientHeight;
         let particles: Particle[] = [];
         let animationFrameId: number;
-        let mouse = { x: -1000, y: -1000 }; // Start off-screen
-
-        // --- PARTICLE CLASS ---
-        class Particle {
-            x: number;
-            y: number;
-            vx: number;
-            vy: number;
-            age: number;
-            life: number;
-
-            constructor() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = 0;
-                this.vy = 0;
-                this.age = 0;
-                // Random lifespan to create natural recycling
-                this.life = Math.random() * 200 + 100;
-            }
-
-            update() {
-                // 1. Flow Field Math (Simplex-ish noise)
-                // We calculate an angle based on position to create the "flow"
-                const angle = (Math.cos(this.x * 0.005) + Math.sin(this.y * 0.005)) * Math.PI;
-
-                // 2. Add force from flow field
-                this.vx += Math.cos(angle) * 0.2 * speed;
-                this.vy += Math.sin(angle) * 0.2 * speed;
-
-                // 3. Mouse Repulsion/Attraction
-                const dx = mouse.x - this.x;
-                const dy = mouse.y - this.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const interactionRadius = 150;
-
-                if (distance < interactionRadius) {
-                    const force = (interactionRadius - distance) / interactionRadius;
-                    // Push away
-                    this.vx -= dx * force * 0.05;
-                    this.vy -= dy * force * 0.05;
-                }
-
-                // 4. Apply Velocity & Friction
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vx *= 0.95; // Friction to stop infinite acceleration
-                this.vy *= 0.95;
-
-                // 5. Aging
-                this.age++;
-                if (this.age > this.life) {
-                    this.reset();
-                }
-
-                // 6. Wrap around screen
-                if (this.x < 0) this.x = width;
-                if (this.x > width) this.x = 0;
-                if (this.y < 0) this.y = height;
-                if (this.y > height) this.y = 0;
-            }
-
-            reset() {
-                this.x = Math.random() * width;
-                this.y = Math.random() * height;
-                this.vx = 0;
-                this.vy = 0;
-                this.age = 0;
-                this.life = Math.random() * 200 + 100;
-            }
-
-            draw(context: CanvasRenderingContext2D) {
-                context.fillStyle = color;
-                // Fade in and out based on age
-                const alpha = 1 - Math.abs((this.age / this.life) - 0.5) * 2;
-                context.globalAlpha = alpha;
-                context.fillRect(this.x, this.y, 1.5, 1.5); // Tiny dots are faster than arcs
-            }
-        }
+        const mouse = { x: -1000, y: -1000 }; // Start off-screen
 
         // --- INITIALIZATION ---
         const init = () => {
@@ -139,7 +143,7 @@ export default function NeuralBackground({
 
             particles = [];
             for (let i = 0; i < particleCount; i++) {
-                particles.push(new Particle());
+                particles.push(new Particle(width, height));
             }
         };
 
@@ -153,8 +157,8 @@ export default function NeuralBackground({
             ctx.fillRect(0, 0, width, height);
 
             particles.forEach((p) => {
-                p.update();
-                p.draw(ctx);
+                p.update(mouse, speed);
+                p.draw(ctx, color);
             });
 
             animationFrameId = requestAnimationFrame(animate);

@@ -1,14 +1,15 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 
-interface AuthTreeNode {
-  id: string;
-  label: string;
-  type: 'orchestrator' | 'worker' | 'transfer';
-  children?: AuthTreeNode[];
-  status: 'pending' | 'active' | 'complete';
-}
+// interface AuthTreeNode {
+//   id: string;
+//   label: string;
+//   type: 'orchestrator' | 'worker' | 'transfer';
+//   children?: AuthTreeNode[];
+//   status: 'pending' | 'active' | 'complete';
+// }
 
 // Transaction state type matching the parent component
 type TransactionState = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
@@ -56,34 +57,34 @@ export default function AuthTreeVisualization({
   const lastPhaseRef = useRef<TransactionState>('idle');
 
   // Build the tree structure
-  const buildTree = (): AuthTreeNode => {
-    const workers = batches.map((batch, index) => {
-      const transfers = Array.from({ length: batch.recipientCount }, (_, i) => ({
-        id: `transfer-${index}-${i}`,
-        label: `Transfer ${i + 1}`,
-        type: 'transfer' as const,
-        status: 'pending' as const,
-      }));
+  // const buildTree = (): AuthTreeNode => {
+  //   const workers = batches.map((batch, index) => {
+  //     const transfers = Array.from({ length: batch.recipientCount }, (_, i) => ({
+  //       id: `transfer-${index}-${i}`,
+  //       label: `Transfer ${i + 1}`,
+  //       type: 'transfer' as const,
+  //       status: 'pending' as const,
+  //     }));
 
-      return {
-        id: `worker-${index}`,
-        label: `Worker ${index + 1}`,
-        type: 'worker' as const,
-        children: transfers,
-        status: 'pending' as const,
-      };
-    });
+  //     return {
+  //       id: `worker-${index}`,
+  //       label: `Worker ${index + 1}`,
+  //       type: 'worker' as const,
+  //       children: transfers,
+  //       status: 'pending' as const,
+  //     };
+  //   });
 
-    return {
-      id: 'orchestrator',
-      label: 'Orchestrator',
-      type: 'orchestrator' as const,
-      children: workers,
-      status: 'pending' as const,
-    };
-  };
+  //   return {
+  //     id: 'orchestrator',
+  //     label: 'Orchestrator',
+  //     type: 'orchestrator' as const,
+  //     children: workers,
+  //     status: 'pending' as const,
+  //   };
+  // };
 
-  const tree = buildTree();
+  // const tree = buildTree();
   const totalNodes = 1 + batches.length + batches.reduce((sum, b) => sum + b.recipientCount, 0);
 
   // Map transaction state to target progress ranges
@@ -103,6 +104,8 @@ export default function AuthTreeVisualization({
   }, []);
 
   // Animate within a phase - smoothly animate toward the phase's max progress
+  const animateWithinPhaseRef = useRef<() => void>(null);
+
   const animateWithinPhase = useCallback(() => {
     if (!phaseStartTimeRef.current) return;
 
@@ -128,11 +131,17 @@ export default function AuthTreeVisualization({
 
     // Keep animating if we haven't reached the cap and transaction is still in this phase
     if (phaseProgress < 1 && !isComplete) {
-      animationRef.current = requestAnimationFrame(animateWithinPhase);
+      animationRef.current = requestAnimationFrame(() => animateWithinPhaseRef.current?.());
     }
   }, [transactionState, isComplete, getTargetProgressForState]);
 
+  useEffect(() => {
+    animateWithinPhaseRef.current = animateWithinPhase;
+  }, [animateWithinPhase]);
+
   // Completion animation - smoothly animate from current progress to 100%
+  const animateToCompletionRef = useRef<() => void>(null);
+
   const animateToCompletion = useCallback(() => {
     if (!completionStartTimeRef.current) return;
 
@@ -153,13 +162,17 @@ export default function AuthTreeVisualization({
     }
 
     if (progress < 1) {
-      animationRef.current = requestAnimationFrame(animateToCompletion);
+      animationRef.current = requestAnimationFrame(() => animateToCompletionRef.current?.());
     } else {
       // Animation fully complete
       setIsVisualizationComplete(true);
       onVisualizationComplete?.();
     }
   }, [onVisualizationComplete]);
+
+  useEffect(() => {
+    animateToCompletionRef.current = animateToCompletion;
+  }, [animateToCompletion]);
 
   // Handle transaction state changes
   useEffect(() => {
@@ -179,6 +192,7 @@ export default function AuthTreeVisualization({
     if (transactionState === 'preparing') {
       // Start fresh
       phaseStartTimeRef.current = Date.now();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCurrentPhase('building');
       animationRef.current = requestAnimationFrame(animateWithinPhase);
     } else if (transactionState === 'signing') {
@@ -202,10 +216,10 @@ export default function AuthTreeVisualization({
       // Stop animation on error
       setCurrentPhase('idle');
     } else if (transactionState === 'idle') {
-      // Reset everything
       phaseStartTimeRef.current = null;
       completionStartTimeRef.current = null;
       progressAtCompletionRef.current = 0;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAnimationProgress(0);
       setCurrentPhase('idle');
       setIsVisualizationComplete(false);

@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 // import { lexendTera } from '../components/Fonts';
 import RecipientsInput, { Recipient } from './components/RecipientsInput';
 import AuthTreeVisualization from './components/AuthTreeVisualization';
@@ -293,10 +295,10 @@ function BatchPaymentsContent() {
                         </svg>
                         Back
                     </button>
-                    <a href="/" className="text-white/80 hover:text-white transition-colors flex items-center bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/5">
-                        <img src="/Tess-W.png" alt="Tesseract" className="h-7 w-7 inline-block mr-2" />
+                    <Link href="/" className="text-white/80 hover:text-white transition-colors flex items-center bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/5">
+                        <Image src="/Tess-W.png" alt="Tesseract" width={28} height={28} className="h-7 w-7 inline-block mr-2" />
                         <span className="hidden sm:inline font-mono">TESSERACT</span>
-                    </a>
+                    </Link>
                 </div>
 
                 {/* Wallet Connection */}

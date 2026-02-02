@@ -7,7 +7,7 @@
  * Browser-compatible version using Web Crypto API
  */
 
-export enum EncryptionMode {
+enum EncryptionMode {
   HYBRID_AES = 'hybrid-aes',
 }
 
