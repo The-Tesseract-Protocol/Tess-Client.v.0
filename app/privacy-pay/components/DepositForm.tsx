@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
+import { usePrivacyStore } from '@/app/store/privacyStore';
 import {
   buildDepositTransaction,
   submitDepositTransaction,
@@ -14,6 +15,7 @@ import {
   SUPPORTED_TOKENS,
 } from '@/app/services/privacyPayService';
 import { signTransaction } from '@stellar/freighter-api';
+import { AutoResetToast } from '@/app/components/ui/auto-reset-toast';
 
 interface DepositFormProps {
   onSuccess?: (txHash: string, hashLN: string) => void;
@@ -24,12 +26,15 @@ type DepositStatus = 'idle' | 'generating' | 'building' | 'signing' | 'submittin
 export default function DepositForm({ onSuccess }: DepositFormProps) {
   const { walletState } = useWallet();
   const { address, isConnected } = walletState;
+  const { addDeposit, fetchData } = usePrivacyStore();
+  
   const [amount, setAmount] = useState('');
   const [token, setToken] = useState<string>('usdc');
   const [status, setStatus] = useState<DepositStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [generatedHashLN, setGeneratedHashLN] = useState<string | null>(null);
+  const [showAutoReset, setShowAutoReset] = useState(false);
 
   const handleDeposit = async () => {
     if (!address || !amount) return;
@@ -42,6 +47,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
     setError(null);
     setTxHash(null);
+    setShowAutoReset(false);
 
     try {
       // Step 1: Generate hashLN
@@ -91,6 +97,17 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       if (result.success && result.txHash) {
         setTxHash(result.txHash);
 
+        // Update Store (Optimistic / Local)
+        addDeposit(address, {
+            hashLN,
+            identity,
+            amount: depositAmount,
+            txHash: result.txHash,
+            timestamp: Date.now(),
+            status: 'confirmed', // Assuming confirmed if on-chain tx succeeded
+            token
+        });
+
         // Step 5: Notify Backend
         setStatus('notifying');
         await notifyBackend(
@@ -102,9 +119,15 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
           token,
           assetContractId
         );
+        
+        // Refresh data from backend to be sure
+        fetchData(address);
 
         setStatus('success');
         onSuccess?.(result.txHash, hashLN);
+        
+        // Show auto-reset toast
+        setShowAutoReset(true);
       } else {
         throw new Error(result.error || 'Transaction failed');
       }
@@ -113,6 +136,14 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
       setError(err.message || 'Deposit failed');
       setStatus('error');
     }
+  };
+
+  const handleReset = () => {
+    setAmount('');
+    setTxHash(null);
+    setError(null);
+    setStatus('idle');
+    setShowAutoReset(false);
   };
 
   const getStatusMessage = () => {
@@ -140,6 +171,15 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
 
   return (
     <div className="space-y-6 w-full">
+      
+      {/* Auto Reset Toast */}
+      <AutoResetToast 
+        isVisible={showAutoReset}
+        onReset={handleReset}
+        onCancel={() => setShowAutoReset(false)}
+        message="Deposit completed successfully."
+      />
+
       {/* Token Selection */}
       <div>
         <label className="block text-sm font-medium text-white/60 mb-2">

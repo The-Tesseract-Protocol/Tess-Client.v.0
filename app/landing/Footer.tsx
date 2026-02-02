@@ -21,7 +21,7 @@ const Footer = () => {
 
                 {/* Main Center Content */}
                 <div className="flex flex-col items-center gap-6 text-center">
-                    <h1 className={`text-[12vw] md:text-[9rem] font-bold ${lexendTera.className} tracking-tighter leading-none select-none`}>
+                    <h1 className={`text-[12vw] md:text-[9rem] font-bold tracking-tighter ${lexendTera.className} leading-none select-none`}>
                         TESSERACT
                     </h1>
                     <p className="text-white/80 text-sm md:text-lg font-light tracking-wide max-w-4xl">
