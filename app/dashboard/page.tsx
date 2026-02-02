@@ -1,6 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import NeuralBackground from '../components/ui/flow-field-background';
 
 export default function Dashboard() {
@@ -20,10 +22,10 @@ export default function Dashboard() {
       {/* Navbar */}
       <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-8 px-16 z-50">
         <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden p-2">
-          <a href="/" className="text-white/80 hover:text-white transition-colors flex items-center">
-            <img src="/Tess-W.png" alt="Tesseract Logo" className="h-8 w-8 mr-2 rounded-2xl font-mono" />
+          <Link href="/" className="text-white/80 hover:text-white transition-colors flex items-center">
+            <Image src="/Tess-W.png" alt="Tesseract Logo" width={32} height={32} className="h-8 w-8 mr-2 rounded-2xl font-mono" />
             <span className="font-mono">TESSERACT</span>
-          </a>
+          </Link>
         </div>
       </nav>
 

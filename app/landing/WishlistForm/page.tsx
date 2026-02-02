@@ -44,7 +44,7 @@ export default function WishlistFormPage() {
       } else {
         setMessage({ type: "error", text: data.message || "Failed to join waitlist. Please try again." });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Network error. Please check your connection." });
     } finally {
       setIsSubmitting(false);
@@ -79,7 +79,6 @@ export default function WishlistFormPage() {
         >
           <NeuralBackground
             color="#818cf8"
-            scale={1}
             trailOpacity={0.1}
             speed={0.8}
           />

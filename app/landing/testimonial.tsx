@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { GridPattern } from '@/app/components/ui/grid-pattern';
 import { getWaitlist, WaitlistServiceResponse } from '@/app/services/waitlistService';
 import { createAvatar } from '@dicebear/core';
 import { pixelArt } from '@dicebear/collection';
+import Image from 'next/image';
 
 type Testimonial = {
 	name: string;
@@ -13,7 +14,7 @@ type Testimonial = {
 	quote: string;
 };
 
-export function TestimonialsSection() {
+function TestimonialsSection() {
 	const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -56,7 +57,7 @@ export function TestimonialsSection() {
 			<div className="mx-auto max-w-5xl space-y-8">
 				<div className="flex flex-col gap-2">
 					<h1 className="text-center text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 text-xl font-bold tracking-wide text-balance font-mono md:text-3xl lg:text-4xl xl:text-5xl xl:font-bold">
-						Our User's Reviews
+						Our User&apos;s Reviews
 					</h1>
 				</div>
 
@@ -95,10 +96,11 @@ export function TestimonialsSection() {
 										/>
 									</div>
 								</div>
-								<img
+								<Image
 									alt={name}
 									src={image}
-									loading="lazy"
+									width={36}
+									height={36}
 									className="size-9 rounded-full"
 								/>
 								<div>

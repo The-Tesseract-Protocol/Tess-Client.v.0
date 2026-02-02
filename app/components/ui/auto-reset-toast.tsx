@@ -22,12 +22,15 @@ export const AutoResetToast: React.FC<AutoResetToastProps> = ({
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     return () => setMounted(false);
   }, []);
 
   useEffect(() => {
     if (isVisible) {
+      // Only reset if needed
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(duration);
       setIsPaused(false);
     }

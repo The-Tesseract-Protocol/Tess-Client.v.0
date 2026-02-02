@@ -7,7 +7,6 @@ import {
     WalletError,
     WalletErrorCode,
     isWalletError,
-    NetworkInfo,
     SignAuthEntryResult,
 } from '../services/walletService';
 
@@ -85,8 +84,6 @@ export function WalletProvider({ children }: WalletProviderProps) {
         // Only run in browser
         if (typeof window !== 'undefined') {
             initialize();
-        } else {
-            setIsLoading(false);
         }
     }, [refreshState]);
 

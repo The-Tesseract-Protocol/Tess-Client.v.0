@@ -1,12 +1,10 @@
 'use client';
 import { ReactLenis } from 'lenis/react';
-import { InvestorCarousel } from "./landing/Carousel";
 import Features from "./landing/Features";
 import Hero from "./landing/Hero";
 import Navbar from "./landing/Navbar";
 import OverviewSection from "./landing/OverSection";
 import Footer from './landing/Footer';
-import Reviews from './landing/Reviews';
 import TestimonialsSection from './landing/testimonial';
 
 export default function Home() {

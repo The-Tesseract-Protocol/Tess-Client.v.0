@@ -1,10 +1,9 @@
 import { AnimatedHeadline } from './AnimatedHeadline';
-import DotEffect from './DotEffect';
-import { DotMatrix } from './DotMatrix';
 
-export const OverviewSection = () => {
+
+ const OverviewSection = () => {
   return (
-    <section className="bg-[#000000] h-screen relative sticky top-0">
+    <section className="bg-[#000000] h-screen sticky top-0">
       <div className="container mx-auto px-6 md:px-12 py-20 md:py-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-[70vh]">
             
@@ -24,7 +23,7 @@ export const OverviewSection = () => {
               <p className="text-white/80 text-sm md:text-md max-w-lg leading-relaxed">
                 We decouple <strong>business intent</strong> from <strong>public finality</strong>.
                 Using a split-knowledge architecture, Tesseract cryptographically isolates
-                your operational data from the ledger's permanent record. Execute high-velocity
+                your operational data from the ledger&apos;s permanent record. Execute high-velocity
                 payroll, vendor batches etc where your competitors see only math,
                 while your auditors retain full, decrypted visibility.
               </p>

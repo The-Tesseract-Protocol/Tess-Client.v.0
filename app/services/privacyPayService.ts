@@ -5,7 +5,6 @@
  */
 
 import {
-  Keypair,
   rpc,
   TransactionBuilder,
   Account,
@@ -153,7 +152,7 @@ export interface PrivacyPayWithdrawal {
   token?: string; // 'usdc' or 'xlm'
 }
 
-export interface PrivacyPaySession {
+interface PrivacyPaySession {
   walletAddress: string;
   deposits: Record<string, PrivacyPayDeposit>;
   withdrawals: Record<string, PrivacyPayWithdrawal>;
@@ -208,7 +207,7 @@ export async function deriveIdentity(hashLN: string, depositorAddress: string): 
  * Hash depositor public key for backend indexing
  * Uses SHA-256 and returns hex string
  */
-export async function hashDepositorPublicKey(publicKey: string): Promise<string> {
+async function hashDepositorPublicKey(publicKey: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(publicKey);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -332,7 +331,7 @@ export async function fetchDepositsFromBackend(depositorPublicKey: string): Prom
 /**
  * Check if account exists and has sufficient balance
  */
-export async function checkAccountStatus(address: string): Promise<{
+async function checkAccountStatus(address: string): Promise<{
   exists: boolean;
   hasAsset: boolean;
   balance?: number;
@@ -749,7 +748,7 @@ const STORAGE_KEY = 'tesseract_privacy_pay';
 /**
  * Get session for a wallet address
  */
-export function getSession(walletAddress: string): PrivacyPaySession {
+function getSession(walletAddress: string): PrivacyPaySession {
   if (typeof window === 'undefined') {
     return { walletAddress, deposits: {}, withdrawals: {} };
   }
@@ -798,14 +797,6 @@ export function saveDeposit(walletAddress: string, deposit: PrivacyPayDeposit): 
 }
 
 /**
- * Get all deposits for a wallet
- */
-export function getDeposits(walletAddress: string): PrivacyPayDeposit[] {
-  const session = getSession(walletAddress);
-  return Object.values(session.deposits).sort((a, b) => b.timestamp - a.timestamp);
-}
-
-/**
  * Save a withdrawal to session
  */
 export function saveWithdrawal(walletAddress: string, withdrawal: PrivacyPayWithdrawal): void {
@@ -820,40 +811,6 @@ export function saveWithdrawal(walletAddress: string, withdrawal: PrivacyPayWith
 export function getWithdrawals(walletAddress: string): PrivacyPayWithdrawal[] {
   const session = getSession(walletAddress);
   return Object.values(session.withdrawals).sort((a, b) => b.timestamp - a.timestamp);
-}
-
-/**
- * Update deposit status
- */
-export function updateDepositStatus(
-  walletAddress: string,
-  hashLN: string,
-  status: PrivacyPayDeposit['status'],
-  txHash?: string
-): void {
-  const session = getSession(walletAddress);
-  if (session.deposits[hashLN]) {
-    session.deposits[hashLN].status = status;
-    if (txHash) {
-      session.deposits[hashLN].txHash = txHash;
-    }
-    saveSession(session);
-  }
-}
-
-/**
- * Update withdrawal status
- */
-export function updateWithdrawalStatus(
-  walletAddress: string,
-  requestId: string,
-  status: PrivacyPayWithdrawal['status']
-): void {
-  const session = getSession(walletAddress);
-  if (session.withdrawals[requestId]) {
-    session.withdrawals[requestId].status = status;
-    saveSession(session);
-  }
 }
 
 /**

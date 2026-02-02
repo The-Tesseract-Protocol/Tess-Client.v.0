@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
 import { usePrivacyStore } from '@/app/store/privacyStore';
 import {
   submitWithdrawal,
-  saveWithdrawal,
   deriveIdentity,
   SUPPORTED_TOKENS,
 } from '@/app/services/privacyPayService';

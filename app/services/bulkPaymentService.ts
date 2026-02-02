@@ -602,6 +602,3 @@ export class BulkPaymentService {
         return this.server;
     }
 }
-
-// Export singleton for convenience
-export const bulkPaymentService = new BulkPaymentService('testnet');

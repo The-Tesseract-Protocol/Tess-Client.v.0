@@ -1,5 +1,7 @@
 'use client';
 
+import Image from "next/image";
+
 const features = [
   {
     title: "Private Deposits",
@@ -35,10 +37,12 @@ export default function Features() {
     <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-24">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
+        <Image 
           src="/its.jpg" 
           alt="Features Background" 
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
+          priority
         />
         <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px]" />
       </div>
