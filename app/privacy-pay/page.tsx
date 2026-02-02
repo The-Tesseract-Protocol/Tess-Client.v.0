@@ -71,7 +71,7 @@ function PrivacyPayContent() {
         </nav>
 
         {/* Main Content */}
-        <div className="font-mono max-w-7xl mx-auto">
+        <div className="font-mono max-w-7xl mx-auto mt-10">
           <div className="mx-auto">
             {/* Header */}
             <div className="text-center mb-8 mt-1">
