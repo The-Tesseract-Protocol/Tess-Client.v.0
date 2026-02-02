@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --font-open-sans: var(--font-anonymous-pro);
+  --font-outfit: var(--font-outfit);
   --font-lexend: var(--font-lexend-tera);
   --font-anonymous-pro: var(--font-anonymous-pro);  
   

@@ -198,7 +198,7 @@ export default function RecipientsInput({
       {/* Mode Toggle and Info */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex bg-white/5 rounded-lg p-1">
+          <div className="flex bg-transparent rounded-lg p-1">
             <button
               onClick={() => setInputMode('manual')}
               className={`px-3 py-1.5 text-sm rounded-md transition-all ${
@@ -279,7 +279,7 @@ export default function RecipientsInput({
       {/* Recipients Table */}
       <div className="bg-black/20 rounded-xl border border-white/10 overflow-hidden">
         {/* Table Header */}
-        <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/5 border-b border-white/10">
+        <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/3 border-b border-white/10">
           <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
             Recipient Address
           </div>
@@ -307,7 +307,7 @@ export default function RecipientsInput({
                   value={recipient.address}
                   onChange={(e) => updateRecipient(recipient.id, 'address', e.target.value)}
                   placeholder="G..."
-                  className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/30 focus:outline-none focus:ring-0 ${
+                  className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:ring-0 ${
                     !recipient.isValid && recipient.address ? 'text-red-400' : ''
                   }`}
                   disabled={disabled}
@@ -327,7 +327,7 @@ export default function RecipientsInput({
                 value={recipient.amount}
                 onChange={(e) => updateRecipient(recipient.id, 'amount', e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-transparent border-0 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-0"
+                className="w-full bg-transparent border-0 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-0"
                 disabled={disabled}
               />
 

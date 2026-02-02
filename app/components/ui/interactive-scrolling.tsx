@@ -320,7 +320,7 @@ const ScrollingFeatureShowcase = () => {
 
             {/* Right Column: Image Content with Grid Background */}
             <div className="hidden md:flex items-center justify-center p-8" style={gridPatternStyle}>
-              <div className="relative w-[100%] h-[80vh] overflow-hidden">
+              <div className="relative w-[70%] h-[50vh] overflow-hidden">
                 <div 
                   className="absolute top-0 left-0 w-full h-full transition-transform duration-700 ease-in-out"
                   style={{ transform: `translateY(-${activeIndex * 100}%)` }}

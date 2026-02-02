@@ -1,4 +1,4 @@
-import { Lexend_Tera, Space_Grotesk, Inter, JetBrains_Mono, Outfit, Anonymous_Pro } from 'next/font/google';
+import { Lexend_Tera, Space_Grotesk, Inter, JetBrains_Mono, Outfit, Open_Sans, Anonymous_Pro } from 'next/font/google';
 
 export const lexendTera = Lexend_Tera({
   subsets: ['latin'],
@@ -8,7 +8,7 @@ export const lexendTera = Lexend_Tera({
 
 export const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '700'],
   variable: '--font-space-grotesk',
 });
 
@@ -28,6 +28,12 @@ export const outfit = Outfit({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-outfit',
+});
+
+export const openSans = Open_Sans({
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-open-sans',
 });
 
 export const anonymousPro = Anonymous_Pro({

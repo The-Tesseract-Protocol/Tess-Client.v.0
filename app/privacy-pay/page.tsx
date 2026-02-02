@@ -44,7 +44,7 @@ function PrivacyPayContent() {
       <div className="absolute min-h-screen top-0 text-white font-mono flex flex-col justify-center w-full">
 
         {/* Navigation */}
-        <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-6 px-8 lg:px-16 z-50 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-6 px-8 lg:px-16 z-50 bg-transparent pointer-events-none">
           <div className="flex items-center gap-x-4 pointer-events-auto">
             <button
               onClick={() => router.push('/dashboard')}

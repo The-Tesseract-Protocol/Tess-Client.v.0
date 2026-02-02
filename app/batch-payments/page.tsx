@@ -257,7 +257,7 @@ function BatchPaymentsContent() {
     // Button shows loading until BOTH transaction completes AND visualization animation finishes
     // This ensures synchronized completion experience
     const isProcessing = isTransactionInProgress ||
-        (txStatus.state === 'success');
+        (txStatus.state === 'success' && !isVisualizationComplete);
 
     const canSubmit = validRecipients.length > 0 && walletState.isConnected && !isProcessing;
 
@@ -338,21 +338,82 @@ function BatchPaymentsContent() {
                                             rel="noopener noreferrer"
                                             className="underline hover:text-yellow-100"
                                         >
-                                            Freighter browser extension
-                                        </a>{' '}
-                                        to use batch payments.
+                                            View on Stellar Expert →
+                                        </a>
                                     </p>
                                 </div>
+                                {(txStatus.state === 'error' || txStatus.state === 'success') && (
+                                    <button
+                                        onClick={resetTransaction}
+                                        className="mt-3 text-sm text-white/50 hover:text-white"
+                                    >
+                                        {txStatus.state === 'success' ? 'New Payment' : 'Try Again'}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}
 
-                    {/* Main Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                        {/* Left Column: Inputs & Status */}
-                        <div className="space-y-6">
-                            <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl">
-                                <h2 className="text-lg font-semibold mb-4 text-white/90">Recipients</h2>
+                    {/* Right Column - Auth Tree Visualization */}
+                    <div className="space-y-6 bg-transparent backdrop-blur-lg rounded-2xl p-6">
+
+                        {/* <div className="bg-black/40 backdrop-blur-lg rounded-2xl border border-white/4 p-6">
+                            <h3 className="text-lg font-semibold mb-4">How It Works</h3>
+                            <div className="space-y-4">
+                                <div className="flex gap-3">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-400">
+                                        1
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm">Add Recipients</div>
+                                        <div className="text-xs text-white/50">
+                                            Upload a CSV or manually enter up to {SAFE_LIMITS.MAX_TOTAL_RECIPIENTS} recipients
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-400">
+                                        2
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm">Build Auth Tree</div>
+                                        <div className="text-xs text-white/50">
+                                            Recipients are split into batches of {SAFE_LIMITS.MAX_RECIPIENTS_PER_BATCH} for optimal processing
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-xs text-blue-400">
+                                        3
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm">Sign with Freighter</div>
+                                        <div className="text-xs text-white/50">
+                                            One signature authorizes all payments atomically
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-xs text-green-400">
+                                        4
+                                    </div>
+                                    <div>
+                                        <div className="font-medium text-sm">Execute</div>
+                                        <div className="text-xs text-white/50">
+                                            All payments succeed or fail together in one transaction
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                     */}
+
+                    {/* Content Grid */}
+                    <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Left Column - Recipients Input */}
+                        <div className="space-y-6 bg-transparent backdrop-blur-sm rounded-2xl border border-white/10 p-1">
+                            <div className=" bg-transparent backdrop-blur-lg rounded-2xl  p-6">
+                                <h2 className="text-lg font-semibold mb-4">Recipients</h2>
                                 <RecipientsInput
                                     recipients={recipients}
                                     onRecipientsChange={setRecipients}
@@ -362,7 +423,7 @@ function BatchPaymentsContent() {
 
                             {/* Payment Summary */}
                             {validRecipients.length > 0 && (
-                                <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl space-y-4">
+                                <div className="bg-black/5 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl space-y-4">
                                     <h2 className="text-lg font-semibold mb-4 text-white/90">Summary</h2>
                                     <div className="space-y-3 text-sm">
                                         <div className="flex justify-between items-center">
@@ -478,7 +539,7 @@ function BatchPaymentsContent() {
 
                         {/* Right Column: Visualization & Info */}
                         <div className="space-y-6">
-                            <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl min-h-[400px]">
+                            <div className="bg-black/20 backdrop-blur-md rounded-3xl border border-white/10 p-6 shadow-xl">
                                 <AuthTreeVisualization
                                     batches={batchInfo}
                                     isProcessing={isTransactionInProgress}
@@ -542,6 +603,7 @@ function BatchPaymentsContent() {
                         </p>
                     </footer>
                 </div>
+            </div>
             </div>
         </main>
     );
