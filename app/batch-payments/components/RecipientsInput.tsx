@@ -15,12 +15,16 @@ interface RecipientsInputProps {
   recipients: Recipient[];
   onRecipientsChange: (recipients: Recipient[]) => void;
   disabled?: boolean;
+  maxRecipients?: number;
+  showBatches?: boolean;
 }
 
 export default function RecipientsInput({
   recipients,
   onRecipientsChange,
   disabled = false,
+  maxRecipients = SAFE_LIMITS.MAX_TOTAL_RECIPIENTS,
+  showBatches = true,
 }: RecipientsInputProps) {
   const [dragActive, setDragActive] = useState(false);
   const [inputMode, setInputMode] = useState<'manual' | 'csv'>('manual');
@@ -49,7 +53,7 @@ export default function RecipientsInput({
 
   // Add empty recipient row
   const addRecipient = () => {
-    if (recipients.length >= SAFE_LIMITS.MAX_TOTAL_RECIPIENTS) return;
+    if (recipients.length >= maxRecipients) return;
 
     const newRecipient: Recipient = {
       id: generateId(),
@@ -85,52 +89,70 @@ export default function RecipientsInput({
     onRecipientsChange(recipients.filter((r) => r.id !== id));
   };
 
+  // Parse CSV content
+  const parseCSVContent = useCallback((content: string) => {
+    const lines = content.trim().split('\n');
+
+    // Skip header if present
+    let startLine = 0;
+    const firstLine = lines[0].toLowerCase();
+    if (firstLine.includes('address') || firstLine.includes('recipient')) {
+      startLine = 1;
+    }
+
+    const newRecipients: Recipient[] = [];
+
+    for (let i = startLine; i < lines.length && newRecipients.length < maxRecipients; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const parts = line.split(',').map((p) => p.trim());
+      if (parts.length >= 2) {
+        const address = parts[0];
+        const amount = parts[1];
+        const validation = validateRecipient(address, amount);
+
+        newRecipients.push({
+          id: generateId(),
+          address,
+          amount,
+          isValid: validation.isValid,
+          error: validation.error,
+        });
+      }
+    }
+
+    if (newRecipients.length > 0) {
+      onRecipientsChange(newRecipients);
+      setInputMode('csv');
+    }
+  }, [onRecipientsChange, maxRecipients]);
+
   // Handle CSV file upload
   const handleFileUpload = useCallback(
     (file: File) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
-        const lines = content.trim().split('\n');
-
-        // Skip header if present
-        let startLine = 0;
-        const firstLine = lines[0].toLowerCase();
-        if (firstLine.includes('address') || firstLine.includes('recipient')) {
-          startLine = 1;
-        }
-
-        const newRecipients: Recipient[] = [];
-
-        for (let i = startLine; i < lines.length && newRecipients.length < SAFE_LIMITS.MAX_TOTAL_RECIPIENTS; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-
-          const parts = line.split(',').map((p) => p.trim());
-          if (parts.length >= 2) {
-            const address = parts[0];
-            const amount = parts[1];
-            const validation = validateRecipient(address, amount);
-
-            newRecipients.push({
-              id: generateId(),
-              address,
-              amount,
-              isValid: validation.isValid,
-              error: validation.error,
-            });
-          }
-        }
-
-        if (newRecipients.length > 0) {
-          onRecipientsChange(newRecipients);
-          setInputMode('csv');
-        }
+        parseCSVContent(content);
       };
       reader.readAsText(file);
     },
-    [onRecipientsChange]
+    [parseCSVContent]
   );
+
+  // Handle Get Test CSV
+  const handleGetTestCSV = async () => {
+    try {
+      const response = await fetch('/upload.csv');
+      if (!response.ok) throw new Error('Failed to load test CSV');
+      const content = await response.text();
+      parseCSVContent(content);
+      setInputMode('manual');
+    } catch (error) {
+      console.error('Error loading test CSV:', error);
+    }
+  };
 
   // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
@@ -189,7 +211,7 @@ export default function RecipientsInput({
               Manual Entry
             </button>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setInputMode('csv')}
               className={`px-3 py-1.5 text-sm rounded-md transition-all ${
                 inputMode === 'csv'
                   ? 'bg-white/10 text-white'
@@ -203,47 +225,57 @@ export default function RecipientsInput({
         </div>
 
         <div className="text-sm text-white/50">
-          {validCount}/{SAFE_LIMITS.MAX_TOTAL_RECIPIENTS} recipients
+          {validCount}/{maxRecipients} recipients
         </div>
       </div>
 
       {/* CSV Drop Zone */}
-      <div
-        className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${
-          dragActive
-            ? 'border-blue-500 bg-blue-500/10'
-            : 'border-white/20 hover:border-white/30'
-        } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv,.txt"
-          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-          className="hidden"
-          disabled={disabled}
-        />
+      {inputMode === 'csv' && (
+        <div
+          className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all ${dragActive
+              ? 'border-blue-500 bg-blue-500/10'
+              : 'border-white/20 hover:border-white/30'
+            } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+            className="hidden"
+            disabled={disabled}
+          />
 
-        <svg className="w-10 h-10 mx-auto mb-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-        </svg>
-        <p className="text-sm text-white/60 mb-1">
-          Drag and drop CSV file here, or{' '}
+          <svg className="w-10 h-10 mx-auto mb-3 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <p className="text-sm text-white/60 mb-3">
+            Drag and drop CSV file here, or{' '}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="text-blue-400 hover:text-blue-300"
+              disabled={disabled}
+            >
+              browse
+            </button>
+          </p>
+          
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="text-blue-400 hover:text-blue-300"
+            onClick={handleGetTestCSV}
+            className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors border border-white/5"
             disabled={disabled}
           >
-            browse
+            Get Test CSV
           </button>
-        </p>
-        <p className="text-xs text-white/40">Format: address,amount (amount in XLM)</p>
-      </div>
-
+          
+          <p className="text-xs text-white/40 mt-3">Format: address,amount (amount in XLM)</p>
+        </div>
+      
+      )}
       {/* Recipients Table */}
       <div className="bg-black/20 rounded-xl border border-white/10 overflow-hidden">
         {/* Table Header */}
@@ -258,7 +290,7 @@ export default function RecipientsInput({
         </div>
 
         {/* Table Body */}
-        <div className="h-[200px] overflow-y-auto">
+        <div className="h-[150px] overflow-y-auto">
           {recipients.map((recipient, index) => (
             <div
               key={recipient.id}
@@ -317,7 +349,7 @@ export default function RecipientsInput({
         <div className="px-4 py-3 border-t border-white/10">
           <button
             onClick={addRecipient}
-            disabled={disabled || recipients.length >= SAFE_LIMITS.MAX_TOTAL_RECIPIENTS}
+            disabled={disabled || recipients.length >= maxRecipients}
             className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors disabled:opacity-30"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -329,7 +361,7 @@ export default function RecipientsInput({
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 p-4 bg-white/2 rounded-xl">
+      <div className={`grid ${showBatches ? 'grid-cols-3' : 'grid-cols-2'} gap-4 p-4 bg-white/2 rounded-xl`}>
         <div>
           <div className="text-xs text-white/40 mb-1">Valid Recipients</div>
           <div className="text-lg font-semibold text-white">
@@ -344,22 +376,24 @@ export default function RecipientsInput({
             <span className="text-sm text-white/40"> XLM</span>
           </div>
         </div>
-        <div>
-          <div className="text-xs text-white/40 mb-1">Batches</div>
-          <div className="text-lg font-semibold text-white">
-            {Math.ceil(validCount / SAFE_LIMITS.MAX_RECIPIENTS_PER_BATCH) || 0}
+        {showBatches && (
+          <div>
+            <div className="text-xs text-white/40 mb-1">Batches</div>
+            <div className="text-lg font-semibold text-white">
+              {Math.ceil(validCount / SAFE_LIMITS.MAX_RECIPIENTS_PER_BATCH) || 0}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Limit Warning */}
-      {recipients.length >= SAFE_LIMITS.MAX_TOTAL_RECIPIENTS  && (
+      {recipients.length >= maxRecipients  && (
         <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <span className="text-sm text-yellow-200">
-            Approaching limit: Maximum {SAFE_LIMITS.MAX_TOTAL_RECIPIENTS} recipients per transaction
+            Approaching limit: Maximum {maxRecipients} recipients per transaction
           </span>
         </div>
       )}

@@ -132,6 +132,7 @@ export interface PrivacyPayDeposit {
   hashLN: string;
   identity: string;
   amount: number;
+  currentBalance?: number;
   txHash: string;
   timestamp: number;
   status: 'pending' | 'confirmed' | 'failed';
@@ -147,6 +148,7 @@ export interface PrivacyPayWithdrawal {
   timestamp: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   txHash?: string;
+  txHashes?: string[];
   senderIdentity?: string;
   token?: string; // 'usdc' or 'xlm'
 }
@@ -310,6 +312,7 @@ export async function fetchDepositsFromBackend(depositorPublicKey: string): Prom
       hashLN: d.hashLN,
       identity: d.expectedIdentity,
       amount: parseFloat(d.amount),
+      currentBalance: d.currentBalance ? parseFloat(d.currentBalance) : undefined,
       txHash: d.txHash,
       timestamp: new Date(d.createdAt).getTime(),
       status: d.status.toLowerCase() as 'pending' | 'confirmed' | 'failed',
@@ -680,6 +683,7 @@ export async function checkJobStatuses(jobIds: string[]): Promise<{
     jobId: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     txHash?: string;
+    txHashes?: string[];
   }>;
 }> {
   try {
@@ -714,13 +718,18 @@ export async function checkJobStatuses(jobIds: string[]): Promise<{
         anyFailed ? 'failed' :
         anyProcessing ? 'processing': 'pending';
 
-      // Pick the first available txHash from the group
-      const completedJob = groupJobs.find((j: any) => j.stellarTransactionHash);
+      // Collect all transaction hashes
+      const allHashes = groupJobs
+        .map((j: any) => j.stellarTransactionHash)
+        .filter((h: any) => !!h);
+      
+      const uniqueHashes = [...new Set(allHashes)] as string[];
 
       return {
         jobId: requestId,
         status,
-        txHash: completedJob?.stellarTransactionHash,
+        txHash: uniqueHashes[0], // Primary/First hash for compatibility
+        txHashes: uniqueHashes,  // All associated hashes
       };
     });
 
@@ -848,13 +857,14 @@ export function updateWithdrawalStatus(
 }
 
 /**
- * Update withdrawal by jobId — sets status, and optionally txHash
+ * Update withdrawal by jobId — sets status, and optionally txHash/txHashes
  */
 export function updateWithdrawalByJobId(
   walletAddress: string,
   jobId: string,
   status: PrivacyPayWithdrawal['status'],
-  txHash?: string
+  txHash?: string,
+  txHashes?: string[]
 ): void {
   const session = getSession(walletAddress);
   // Match by jobId or by requestId (withdrawalRequestId from API may map to either)
@@ -866,6 +876,9 @@ export function updateWithdrawalByJobId(
     withdrawal.status = status;
     if (txHash) {
       withdrawal.txHash = txHash;
+    }
+    if (txHashes && txHashes.length > 0) {
+      withdrawal.txHashes = txHashes;
     }
     session.withdrawals[withdrawal.requestId] = withdrawal;
     saveSession(session);

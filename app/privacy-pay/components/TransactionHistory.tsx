@@ -1,88 +1,17 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useState } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
-import {
-  fetchDepositsFromBackend,
-  getWithdrawals,
-  PrivacyPayDeposit,
-  PrivacyPayWithdrawal,
-  checkJobStatuses,
-  updateWithdrawalByJobId,
-} from '@/app/services/privacyPayService';
+import { usePrivacyStore } from '@/app/store/privacyStore';
 
 export default function TransactionHistory() {
   const { walletState } = useWallet();
   const { address } = walletState;
-  const [deposits, setDeposits] = useState<PrivacyPayDeposit[]>([]);
-  const [withdrawals, setWithdrawals] = useState<PrivacyPayWithdrawal[]>([]);
+  
+  // Use Zustand store
+  const { deposits, withdrawals, isLoading } = usePrivacyStore();
+  
   const [activeTab, setActiveTab] = useState<'deposits' | 'withdrawals'>('deposits');
-  const [isLoadingDeposits, setIsLoadingDeposits] = useState(false);
-  const withdrawalsRef = useRef(withdrawals);
-
-  // Keep ref in sync with state
-  useEffect(() => {
-    withdrawalsRef.current = withdrawals;
-  }, [withdrawals]);
-
-  const pollJobs = useCallback(async () => {
-    if (!address) return;
-
-    const pendingWithdrawals = withdrawalsRef.current.filter(w => w.jobId);
-    if (pendingWithdrawals.length === 0) return;
-
-    const jobIds = pendingWithdrawals.map(w => w.jobId!);
-
-    try {
-      const result = await checkJobStatuses(jobIds);
-      let updated = false;
-      result.jobs.forEach(job => {
-        updateWithdrawalByJobId(address, job.jobId, job.status, job.txHash);
-        updated = true;
-      });
-
-      if (updated) {
-        const refreshed = getWithdrawals(address);
-        setWithdrawals(refreshed);
-        withdrawalsRef.current = refreshed;
-      }
-    } catch (error) {
-      console.error('Error polling job statuses:', error);
-    }
-  }, [address]);
-
-  // Load data
-  useEffect(() => {
-    if (!address) return;
-
-    const loadDeposits = async () => {
-      setIsLoadingDeposits(true);
-      try {
-        const data = await fetchDepositsFromBackend(address);
-        setDeposits(data);
-      } catch (error) {
-        console.error('Failed to load deposits:', error);
-      } finally {
-        setIsLoadingDeposits(false);
-      }
-    };
-
-    loadDeposits();
-
-    const loaded = getWithdrawals(address);
-    setWithdrawals(loaded);
-    withdrawalsRef.current = loaded;
-
-    pollJobs();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address]);
-
-  // Poll interval
-  useEffect(() => {
-    if (!address) return;
-    const interval = setInterval(pollJobs, 3 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [address, pollJobs]);
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('en-US', {
@@ -125,7 +54,7 @@ export default function TransactionHistory() {
   const isEmpty = activeTab === 'deposits' ? deposits.length === 0 : withdrawals.length === 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col max-h-[70vh] overflow-y-scroll">
       {/* Tabs */}
       <div className="flex p-1 bg-white/5 rounded-xl mb-4">
         <button
@@ -151,12 +80,12 @@ export default function TransactionHistory() {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 scrollbar-hide">
-        {isLoadingDeposits && activeTab === 'deposits' && (
+      <div className="flex-1 overflow-y-scoll pr-2 -mr-2 space-y-3 scrollbar-hide">
+        {isLoading && activeTab === 'deposits' && deposits.length === 0 && (
           <div className="text-center py-8 text-white/30 text-xs animate-pulse">Loading deposits...</div>
         )}
 
-        {!isLoadingDeposits && isEmpty && (
+        {!isLoading && isEmpty && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
               <svg className="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,7 +99,7 @@ export default function TransactionHistory() {
         {activeTab === 'deposits' && deposits.map((deposit) => (
           <div
             key={deposit.hashLN}
-            className="group bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300"
+            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-4 transition-all duration-300"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
@@ -221,7 +150,7 @@ export default function TransactionHistory() {
         {activeTab === 'withdrawals' && withdrawals.map((withdrawal) => (
           <div
             key={withdrawal.requestId}
-            className="group bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-2xl p-4 transition-all duration-300"
+            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 overflow-y-scroll"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
@@ -249,7 +178,26 @@ export default function TransactionHistory() {
                   {Object.keys(withdrawal.recipients).length}
                 </span>
               </div>
-              {withdrawal.txHash ? (
+              {withdrawal.txHashes && withdrawal.txHashes.length > 0 ? (
+                <div className="space-y-1 max-h-[80px] overflow-scroll">
+                  {withdrawal.txHashes.map((hash, idx) => (
+                    <div key={hash} className="flex justify-between items-center text-xs">
+                      <span className="text-white/30">{idx === 0 ? 'Tx' : ''}</span>
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/tx/${hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-purple-400 hover:text-purple-300 font-mono text-[10px] flex items-center gap-1"
+                      >
+                        {hash.slice(0, 8)}...
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              ) : withdrawal.txHash ? (
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-white/30">Tx</span>
                   <a

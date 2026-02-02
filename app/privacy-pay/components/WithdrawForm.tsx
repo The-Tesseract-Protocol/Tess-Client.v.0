@@ -1,31 +1,25 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useWallet } from '@/app/contexts/WalletContext';
+import { usePrivacyStore } from '@/app/store/privacyStore';
 import {
   submitWithdrawal,
   saveWithdrawal,
-  getDeposits,
   deriveIdentity,
   SUPPORTED_TOKENS,
-  fetchDepositsFromBackend,
-  saveDeposit,
 } from '@/app/services/privacyPayService';
 import { Keypair } from '@stellar/stellar-sdk';
 import { HybridCryptoUtil } from '@/app/utils/hybrid-crypto.util';
 import { signMessage } from '@stellar/freighter-api';
-
-interface Recipient {
-  address: string;
-  amount: string;
-}
+import { AutoResetToast } from '@/app/components/ui/auto-reset-toast';
+import RecipientsInput, { Recipient as RecipientInputType } from '@/app/batch-payments/components/RecipientsInput';
 
 interface WithdrawFormProps {
   onSuccess?: (requestId: string) => void;
 }
 
 type WithdrawStatus = 'idle' | 'encrypting' | 'submitting' | 'success' | 'error';
-type InputMode = 'manual' | 'csv';
 
 const DECRYPTION_STEPS = [
   'Signature Confirmed',
@@ -38,67 +32,76 @@ const DECRYPTION_STEPS = [
 export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const { walletState } = useWallet();
   const { address, isConnected } = walletState;
+
+  // Use Zustand Store
+  const { deposits, isLoading: loadingDeposits, addWithdrawal } = usePrivacyStore();
+
   const [hashLN, setHashLN] = useState('');
   const [token, setToken] = useState<string>('usdc');
-  const [recipients, setRecipients] = useState<Recipient[]>([{ address: '', amount: '' }]);
+  const [recipients, setRecipients] = useState<RecipientInputType[]>([
+    { id: '1', address: '', amount: '', isValid: false }
+  ]);
   const [status, setStatus] = useState<WithdrawStatus>('idle');
   const [error, setError] = useState<string | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
+  const [showAutoReset, setShowAutoReset] = useState(false);
 
   // Decryption state
   const [isDecrypted, setIsDecrypted] = useState(false);
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [showDecryptionModal, setShowDecryptionModal] = useState(false);
   const [decryptionStep, setDecryptionStep] = useState(0);
+  const [showDecryptWarning, setShowDecryptWarning] = useState(false);
 
-  // CSV upload state
-  const [inputMode, setInputMode] = useState<InputMode>('manual');
-  const [csvError, setCsvError] = useState<string | null>(null);
-  const [csvFileName, setCsvFileName] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Deposits state
-  const [userDeposits, setUserDeposits] = useState<any[]>([]);
-  const [loadingDeposits, setLoadingDeposits] = useState(false);
-
-  // Fetch deposits from backend when component mounts or address changes
-  useEffect(() => {
-    const loadDeposits = async () => {
-      if (!address) {
-        setUserDeposits([]);
-        return;
-      }
-
-      setLoadingDeposits(true);
-      try {
-        // Fetch from backend
-        const backendDeposits = await fetchDepositsFromBackend(address);
-
-        // Update localStorage cache
-        backendDeposits.forEach(deposit => {
-          saveDeposit(address, deposit);
-        });
-
-        // Set to state
-        setUserDeposits(backendDeposits);
-      } catch (error) {
-        console.error('Failed to fetch deposits:', error);
-        // Fallback to localStorage if backend fails
-        setUserDeposits(getDeposits(address));
-      } finally {
-        setLoadingDeposits(false);
-      }
-    };
-
-    loadDeposits();
-  }, [address]);
-
-  const handleDecrypt = async () => {
-    if (!address || !isConnected) return;
+  const handleDecrypt = async (): Promise<boolean> => {
+    if (!address || !isConnected) return false;
     setIsDecrypting(true);
     try {
-      const message = `Decrypting privacy deposits for ${address} at ${new Date().toISOString()}`;
-      await signMessage(message, { address: address });
+      // 1. Construct detailed payload
+      const confirmedDeposits = deposits.filter(d => d.status === 'confirmed');
+      const depositCount = confirmedDeposits.length;
+      
+      let hashesList = confirmedDeposits
+        .slice(0, 5)
+        .map(d => `  - ${d.hashLN.slice(0, 16)}...`)
+        .join('\n');
+      
+      if (depositCount > 5) {
+        hashesList += `\n  - ...and ${depositCount - 5} more`;
+      }
+
+      const message = `Decrypting privacy deposits for ${address}
+Timestamp: ${new Date().toISOString()}
+Confirmed Deposits: ${depositCount}
+Hashes:
+${hashesList}`;
+
+      // 2. Request signature
+      // Explicitly handle Freighter response types (string | { signature } | { error } | { signedMessage })
+      const response: any = await signMessage(message, { address });
+      
+      if (!response) {
+        throw new Error('No response from wallet');
+      }
+      
+      if (typeof response === 'object' && 'error' in response) {
+        throw new Error(response.error || 'Signature declined');
+      }
+      
+      // Handle various response formats from different wallet versions
+      let signature = '';
+      if (typeof response === 'string') {
+        signature = response;
+      } else if (typeof response === 'object') {
+        signature = response.signature || response.signedMessage;
+      }
+      
+      if (!signature) {
+        // Fallback: If response is an object but has no known signature field, log it (console only) and potentially fail
+        console.warn('Unexpected wallet response format:', response);
+        throw new Error('No signature received from wallet');
+      }
 
       // Start decryption visual sequence
       setShowDecryptionModal(true);
@@ -140,162 +143,57 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
 
       setShowDecryptionModal(false);
       setIsDecrypted(true);
+      return true;
     } catch (e) {
-      console.error('Decryption failed', e);
+      console.error('Decryption failed or cancelled:', e);
+      return false;
     } finally {
       setIsDecrypting(false);
     }
   };
 
-  // CSV parsing function
-  const parseCSV = (content: string): { recipients: Recipient[]; error?: string } => {
-    const lines = content.trim().split('\n');
-    const parsedRecipients: Recipient[] = [];
-
-    // Detect and skip header
-    let startLine = 0;
-    const firstLine = lines[0]?.toLowerCase() || '';
-    if (firstLine.includes('address') || firstLine.includes('recipient') || firstLine.includes('amount')) {
-      startLine = 1;
-    }
-
-    for (let i = startLine; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const parts = line.split(',').map((p) => p.trim());
-      if (parts.length < 2) {
-        return { recipients: [], error: `Invalid format at line ${i + 1}: expected "address,amount"` };
-      }
-
-      const addr = parts[0];
-      const amount = parts[1];
-
-      // Validate address
-      if (!addr || addr.length !== 56 || !addr.startsWith('G')) {
-        return { recipients: [], error: `Invalid Stellar address at line ${i + 1}: ${addr}` };
-      }
-
-      // Validate amount
-      const amountNum = parseFloat(amount);
-      if (isNaN(amountNum) || amountNum <= 0) {
-        return { recipients: [], error: `Invalid amount at line ${i + 1}: ${amount}` };
-      }
-
-      parsedRecipients.push({ address: addr, amount });
-    }
-
-    if (parsedRecipients.length === 0) {
-      return { recipients: [], error: 'No valid recipients found in CSV' };
-    }
-
-    // With hybrid encryption, we can support up to ~133 recipients
-    const maxRecipients = HybridCryptoUtil.calculateMaxRecipients();
-    if (parsedRecipients.length > maxRecipients) {
-      return {
-        recipients: [],
-        error: `Maximum ${maxRecipients} recipients allowed per withdrawal`
-      };
-    }
-
-    return { recipients: parsedRecipients };
-  };
-
-  // Handle CSV file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setCsvError(null);
-    setCsvFileName(file.name);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const result = parseCSV(content);
-
-      if (result.error) {
-        setCsvError(result.error);
-        setRecipients([{ address: '', amount: '' }]);
-      } else {
-        setRecipients(result.recipients);
-        setCsvError(null);
-      }
-    };
-    reader.onerror = () => {
-      setCsvError('Failed to read file');
-    };
-    reader.readAsText(file);
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  // Handle mode switch
-  const handleModeSwitch = (mode: InputMode) => {
-    setInputMode(mode);
-    setCsvError(null);
-    setCsvFileName(null);
-    if (mode === 'manual') {
-      setRecipients([{ address: '', amount: '' }]);
-    }
-  };
-
-  // Clear CSV and reset
-  const clearCSV = () => {
-    setRecipients([{ address: '', amount: '' }]);
-    setCsvFileName(null);
-    setCsvError(null);
-  };
-
-  const addRecipient = () => {
-    setRecipients([...recipients, { address: '', amount: '' }]);
-  };
-
-  const removeRecipient = (index: number) => {
-    if (recipients.length > 1) {
-      setRecipients(recipients.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateRecipient = (index: number, field: 'address' | 'amount', value: string) => {
-    const updated = [...recipients];
-    updated[index][field] = value;
-    setRecipients(updated);
-  };
+  const validRecipients = useMemo(() => recipients.filter(r => r.isValid), [recipients]);
 
   const getTotalAmount = () => {
-    return recipients.reduce((sum, r) => {
+    return validRecipients.reduce((sum, r) => {
       const amt = parseFloat(r.amount);
       return sum + (isNaN(amt) ? 0 : amt);
     }, 0);
   };
 
-  const isValidRecipient = (r: Recipient) => {
-    return (
-      r.address.length === 56 &&
-      r.address.startsWith('G') &&
-      !isNaN(parseFloat(r.amount)) &&
-      parseFloat(r.amount) > 0
-    );
-  };
-
-  const allRecipientsValid = recipients.every(isValidRecipient);
-
   const handleWithdraw = async () => {
-    if (!address || !hashLN || !allRecipientsValid) return;
+    // If not decrypted, we must force the decryption flow first
+    if (!isDecrypted) {
+      if (!address || !hashLN) return; // Basic validation for selection presence
+
+      // Show warning
+      setShowDecryptWarning(true);
+      
+      // Wait 2 seconds showing the warning
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setShowDecryptWarning(false);
+
+      // Proceed to decrypt
+      const success = await handleDecrypt();
+      
+      // CRITICAL: Stop if decryption failed or was cancelled
+      if (!success) return;
+      
+      // If decryption succeeded, continue to withdrawal below...
+    }
+
+    if (!address || !hashLN || validRecipients.length === 0) return;
 
     setError(null);
     setRequestId(null);
+    setShowAutoReset(false);
 
     try {
       // Step 1: Prepare recipients map
       setStatus('encrypting');
 
       const recipientsMap: Record<string, string> = {};
-      recipients.forEach((r) => {
+      validRecipients.forEach((r) => {
         recipientsMap[r.address] = r.amount;
       });
 
@@ -332,8 +230,8 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       setRequestId(result.requestId);
       setStatus('success');
 
-      // Save withdrawal to session with jobId
-      saveWithdrawal(address, {
+      // Save withdrawal to session with jobId (and update store)
+      addWithdrawal(address, {
         requestId: result.requestId,
         jobId: result.jobId,
         hashLN,
@@ -346,11 +244,21 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       });
 
       onSuccess?.(result.requestId);
+      setShowAutoReset(true);
     } catch (err: any) {
       console.error('Withdrawal error:', err);
       setError(err.message || 'Withdrawal failed');
       setStatus('error');
     }
+  };
+
+  const handleReset = () => {
+    setRecipients([{ id: '1', address: '', amount: '', isValid: false }]);
+    setHashLN('');
+    setRequestId(null);
+    setError(null);
+    setStatus('idle');
+    setShowAutoReset(false);
   };
 
   const getStatusMessage = () => {
@@ -369,69 +277,93 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   };
 
   const isProcessing = ['encrypting', 'submitting'].includes(status);
+  const maxRecipients = HybridCryptoUtil.calculateMaxRecipients();
 
   return (
     <div className="space-y-6 relative">
-      {/* Decryption Modal */}
-      {showDecryptionModal && (
-          <div className=" inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center transform transition-all">
-              <div className="relative w-16 h-16 mx-auto mb-4">
-                <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full"></div>
-                <div className="absolute inset-0 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  {decryptionStep === 4 ? (
-                    <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  )}
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-white tracking-tight">
-                  {decryptionStep === 4 ? 'Decryption Complete' : 'Decrypting Deposits'}
-                </h3>
-                <p className="text-white/40 text-sm">
-                  Please wait while we securely process your data
-                </p>
-              </div>
+      {/* Auto Reset Toast */}
+      <AutoResetToast
+        isVisible={showAutoReset}
+        onReset={handleReset}
+        onCancel={() => setShowAutoReset(false)}
+        message="Withdrawal request submitted."
+      />
 
-              <div className="space-y-3 pt-2">
-                {DECRYPTION_STEPS.map((step, index) => {
-                  const isActive = index === decryptionStep;
-                  const isCompleted = index < decryptionStep;
-
-                  return (
-                    <div
-                      key={index}
-                      className={`flex items-center gap-3 transition-all duration-300 ${isActive ? 'opacity-100 transform scale-105' :
-                          isCompleted ? 'opacity-50' : 'opacity-20'
-                        }`}
-                    >
-                      <div className={`w-2 h-2 rounded-full transition-colors ${isActive ? 'bg-purple-500 animate-pulse' :
-                          isCompleted ? 'bg-green-500' : 'bg-white'
-                        }`} />
-                      <span className={`text-sm font-medium ${isActive ? 'text-purple-400' :
-                          isCompleted ? 'text-green-400' : 'text-white'
-                        }`}>
-                        {step}
-                      </span>
-                      {isCompleted && (
-                        <svg className="w-4 h-4 text-green-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+      {/* Decryption Warning Toast */}
+      {showDecryptWarning && (
+        <div className=" z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/80 backdrop-blur-md border border-white/10 text-white px-6 py-4 rounded-xl shadow-2xl animate-in fade-in zoom-in duration-300">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="font-medium">Decryption of withdrawal intent required</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Decryption Modal */}
+      {showDecryptionModal && (
+        <div className=" inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-2xl p-8 max-w-sm w-full shadow-2xl space-y-6 text-center transform transition-all">
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full"></div>
+              <div className="absolute inset-0 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                {decryptionStep === 4 ? (
+                  <svg className="w-8 h-8 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-bold text-white tracking-tight">
+                {decryptionStep === 4 ? 'Decryption Complete' : 'Decrypting Deposits'}
+              </h3>
+              <p className="text-white/40 text-sm">
+                Please wait while we securely process your data
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {DECRYPTION_STEPS.map((step, index) => {
+                const isActive = index === decryptionStep;
+                const isCompleted = index < decryptionStep;
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-center gap-3 transition-all duration-300 ${isActive ? 'opacity-100 transform scale-105' :
+                      isCompleted ? 'opacity-50' : 'opacity-20'
+                      }`}
+                  >
+                    <div className={`w-2 h-2 rounded-full transition-colors ${isActive ? 'bg-purple-500 animate-pulse' :
+                      isCompleted ? 'bg-green-500' : 'bg-white'
+                      }`} />
+                    <span className={`text-sm font-medium ${isActive ? 'text-purple-400' :
+                      isCompleted ? 'text-green-400' : 'text-white'
+                      }`}>
+                      {step}
+                    </span>
+                    {isCompleted && (
+                      <svg className="w-4 h-4 text-green-500 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* HashLN Input/Selection */}
@@ -440,9 +372,9 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
           <label className="block text-sm font-medium text-white/60">
             Select Deposit
           </label>
-          {!isDecrypted && userDeposits.length > 0 && !loadingDeposits && (
+          {!isDecrypted && deposits.length > 0 && !loadingDeposits && (
             <button
-              onClick={handleDecrypt}
+              onClick={async () => { await handleDecrypt(); }}
               disabled={isDecrypting || !isConnected}
               className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors disabled:opacity-50"
             >
@@ -464,7 +396,7 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             <span className="text-white/60 text-sm">Loading deposits...</span>
           </div>
-        ) : userDeposits.length > 0 ? (
+        ) : deposits.length > 0 ? (
           <select
             value={hashLN}
             onChange={(e) => setHashLN(e.target.value)}
@@ -472,13 +404,13 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             className="w-full bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
           >
             <option value="">{isDecrypted ? 'Select from your deposits' : 'Encrypted Deposits Found'}</option>
-            {userDeposits
+            {deposits
               .filter((d) => d.status === 'confirmed')
               .map((d) => (
                 <option key={d.hashLN} value={d.hashLN}>
                   {!isDecrypted
                     ? `Identity: ${(d.identity || '').slice(0, 20)}...`
-                    : `${d.hashLN.slice(0, 16)}... (${d.amount} ${(d.token || 'usdc').toUpperCase()})`
+                    : `${d.hashLN.slice(0, 16)}... (${d.currentBalance !== undefined ? d.currentBalance : d.amount} ${(d.token || 'usdc').toUpperCase()})`
                   }
                 </option>
               ))}
@@ -507,8 +439,8 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
               onClick={() => setToken(key)}
               disabled={isProcessing}
               className={`p-4 rounded-xl border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${token === key
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-transparent hover:border-white/20'
+                ? 'border-purple-500 bg-purple-500/10'
+                : 'border-white/10 bg-transparent hover:border-white/20'
                 }`}
             >
               <div className="flex items-center justify-between">
@@ -530,240 +462,76 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
           <label className="block text-sm font-medium text-white/60">
             Recipients
           </label>
-          {/* Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg">
-            <button
-              onClick={() => handleModeSwitch('manual')}
-              disabled={isProcessing}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${inputMode === 'manual'
-                  ? 'bg-purple-500/20 text-purple-400'
-                  : 'text-white/40 hover:text-white/60'
-                } disabled:opacity-50`}
-            >
-              Manual
-            </button>
-            <button
-              onClick={() => handleModeSwitch('csv')}
-              disabled={isProcessing}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${inputMode === 'csv'
-                  ? 'bg-purple-500/20 text-purple-400'
-                  : 'text-white/40 hover:text-white/60'
-                } disabled:opacity-50`}
-            >
-              CSV Upload
-            </button>
-          </div>
         </div>
-
-        {/* CSV Upload Mode */}
-        {inputMode === 'csv' && (
-          <div className="space-y-3">
-            {/* Hidden file input */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.txt"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-
-            {/* Upload area */}
-            {!csvFileName ? (
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isProcessing}
-                className="w-full border-2 border-dashed border-white/20 hover:border-purple-500/50 rounded-xl p-6 text-center transition-all disabled:opacity-50"
-              >
-                <svg className="w-8 h-8 mx-auto mb-2 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p className="text-sm text-white/60">Click to upload CSV</p>
-                <p className="text-xs text-white/30 mt-1">Format: address,amount</p>
-              </button>
-            ) : (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-white">{csvFileName}</p>
-                      <p className="text-xs text-white/40">{recipients.filter(r => r.address && r.amount).length} recipients loaded</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={clearCSV}
-                    disabled={isProcessing}
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
-                  >
-                    <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* CSV Error */}
-            {csvError && (
-              <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-xs text-red-400">{csvError}</span>
-              </div>
-            )}
-
-            {/* Preview loaded recipients */}
-            {csvFileName && recipients.length > 0 && !csvError && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-3 max-h-48 overflow-y-auto">
-                <p className="text-xs text-white/40 mb-2">Preview:</p>
-                <div className="space-y-1">
-                  {recipients.slice(0, 5).map((r, i) => (
-                    <div key={i} className="flex justify-between text-xs">
-                      <span className="font-mono text-white/60 truncate max-w-[60%]">{r.address}</span>
-                      <span className="text-purple-400">{r.amount} {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}</span>
-                    </div>
-                  ))}
-                  {recipients.length > 5 && (
-                    <p className="text-xs text-white/30 text-center pt-1">
-                      +{recipients.length - 5} more recipients
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Manual Entry Mode */}
-        {inputMode === 'manual' && (
-          <>
-            <div className="flex justify-end mb-2">
-              <button
-                onClick={addRecipient}
-                disabled={
-                  isProcessing ||
-                  recipients.length >= HybridCryptoUtil.calculateMaxRecipients()
-                }
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors disabled:opacity-50 border border-blue-400/20 hover:border-blue-400/40 px-3 py-1.5 rounded-lg"
-              >
-                + Add Recipient
-              </button>
-            </div>
-            <div className="space-y-3 max-h-[160px] overflow-y-auto">
-              {recipients.map((recipient, index) => (
-                <div key={index} className="flex gap-3">
-                  <input
-                    type="text"
-                    value={recipient.address}
-                    onChange={(e) => updateRecipient(index, 'address', e.target.value)}
-                    placeholder="G..."
-                    disabled={isProcessing}
-                    className={`flex-1 bg-transparent border rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-1 transition-all disabled:opacity-50 font-mono text-sm ${recipient.address && !recipient.address.startsWith('G')
-                        ? 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/50'
-                        : 'border-white/10 focus:border-blue-500/50 focus:ring-blue-500/50'
-                      }`}
-                  />
-                  <input
-                    type="number"
-                    value={recipient.amount}
-                    onChange={(e) => updateRecipient(index, 'amount', e.target.value)}
-                    placeholder="Amount"
-                    disabled={isProcessing}
-                    className="w-32 bg-transparent border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all disabled:opacity-50"
-                  />
-                  {recipients.length > 1 && (
-                    <button
-                      onClick={() => removeRecipient(index)}
-                      disabled={isProcessing}
-                      className="p-3 hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50"
-                    >
-                      <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        
+        <RecipientsInput 
+          recipients={recipients}
+          onRecipientsChange={setRecipients}
+          disabled={isProcessing}
+          maxRecipients={maxRecipients}
+          showBatches={false}
+        />
       </div>
-
-      {/* Summary */}
-      <div className="bg-transparent border border-white/5 rounded-xl p-4">
-        <div className="flex justify-between items-center">
-          <span className="text-white/60">Total Withdrawal</span>
-          <span className="text-xl font-semibold text-white">
-            {getTotalAmount().toFixed(2)} {SUPPORTED_TOKENS[token]?.symbol || 'USDC'}
-          </span>
-        </div>
-        <div className="flex justify-between items-center mt-2 text-sm">
-          <span className="text-white/40">Recipients</span>
-          <span className="text-white/60">{recipients.filter(isValidRecipient).length}</span>
-        </div>
-      </div>
-
 
       {/* Status Message */}
-      {getStatusMessage() && (
-        <div
-          className={`flex items-center gap-3 p-4 rounded-xl ${status === 'success'
+      {
+        getStatusMessage() && (
+          <div
+            className={`flex items-center gap-3 p-4 rounded-xl ${status === 'success'
               ? 'bg-green-500/10 border border-green-500/20'
               : status === 'error'
                 ? 'bg-red-500/10 border border-red-500/20'
                 : 'bg-white/5 border border-white/10'
-            }`}
-        >
-          {isProcessing && (
-            <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-          )}
-          {status === 'success' && (
-            <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          )}
-          {status === 'error' && (
-            <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          )}
-          <span
-            className={`text-sm ${status === 'success'
+              }`}
+          >
+            {isProcessing && (
+              <div className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+            )}
+            {status === 'success' && (
+              <svg className="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            )}
+            {status === 'error' && (
+              <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span
+              className={`text-sm ${status === 'success'
                 ? 'text-green-400'
                 : status === 'error'
                   ? 'text-red-400'
                   : 'text-white/60'
-              }`}
-          >
-            {getStatusMessage()}
-          </span>
-        </div>
-      )}
+                }`}
+            >
+              {getStatusMessage()}
+            </span>
+          </div>
+        )
+      }
 
       {/* Request ID */}
-      {requestId && (
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-          <label className="block text-xs font-medium text-white/40 mb-2">
-            Request ID
-          </label>
-          <code className="font-mono text-sm text-purple-400 break-all">
-            {requestId}
-          </code>
-        </div>
-      )}
+      {
+        requestId && (
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <label className="block text-xs font-medium text-white/40 mb-2">
+              Request ID
+            </label>
+            <code className="font-mono text-sm text-purple-400 break-all">
+              {requestId}
+            </code>
+          </div>
+        )
+      }
 
       {/* Submit Button */}
       <button
         onClick={handleWithdraw}
-        disabled={!isConnected || !hashLN || !allRecipientsValid || isProcessing}
-        className={`w-full py-4 rounded-xl font-semibold transition-all ${!isConnected || !hashLN || !allRecipientsValid || isProcessing
-            ? 'bg-white/5 text-white/30 cursor-not-allowed'
-            : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-600 text-white'
+        disabled={!isConnected || !hashLN || validRecipients.length === 0 || isProcessing}
+        className={`w-full py-4 rounded-xl font-semibold transition-all ${!isConnected || !hashLN || validRecipients.length === 0 || isProcessing
+          ? 'bg-white/5 text-white/30 cursor-not-allowed'
+          : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-600 text-white'
           }`}
       >
         {!isConnected
@@ -772,6 +540,15 @@ export default function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             ? getStatusMessage()
             : 'Submit Private Withdrawal'}
       </button>
-    </div>
+
+      {/* Disabled State Info Message */}
+      {isConnected && (!hashLN || validRecipients.length === 0) && !isProcessing && (
+        <p className="text-center text-xs text-white/40 mt-2">
+          {!hashLN || !isDecrypted 
+            ? 'Decryption and selection of intent needed to proceed.' 
+            : 'Add at least one valid recipient to proceed.'}
+        </p>
+      )}
+    </div >
   );
 }

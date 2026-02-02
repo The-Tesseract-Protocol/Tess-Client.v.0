@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { lexendTera } from '../components/Fonts';
+// import { lexendTera } from '../components/Fonts';
 import RecipientsInput, { Recipient } from './components/RecipientsInput';
 import AuthTreeVisualization from './components/AuthTreeVisualization';
 import { SAFE_LIMITS, BulkPaymentService, PaymentRecipient } from '../services/bulkPaymentService';
@@ -10,6 +10,7 @@ import { WalletProvider, useWallet, ConnectWalletButton, NetworkBadge } from '..
 import { isWalletError, WalletErrorCode } from '../services/walletService';
 // import IsoLevelWarp from '../components/ui/isometric-ui';
 import NeuralBackground from '../components/ui/flow-field-background';
+import { AutoResetToast } from '../components/ui/auto-reset-toast';
 
 type TransactionState = 'idle' | 'preparing' | 'signing' | 'submitting' | 'success' | 'error';
 
@@ -31,6 +32,9 @@ function BatchPaymentsContent() {
         state: 'idle',
         message: 'Ready to process payments',
     });
+
+    // Auto-reset state
+    const [showAutoReset, setShowAutoReset] = useState(false);
 
     // NEW: Track if visualization animation has completed
     const [isVisualizationComplete, setIsVisualizationComplete] = useState(false);
@@ -65,6 +69,7 @@ function BatchPaymentsContent() {
     const executeBatchPayment = async () => {
         // Reset visualization state for new transaction
         setIsVisualizationComplete(false);
+        setShowAutoReset(false);
 
         if (validRecipients.length === 0) {
             setTxStatus({
@@ -215,6 +220,8 @@ function BatchPaymentsContent() {
                     message: `Payment successful! ${batchResult.stats?.totalRecipients} recipients paid.`,
                     hash: txResult.hash,
                 });
+                // Trigger auto-reset flow
+                setShowAutoReset(true);
             } else {
                 setTxStatus({
                     state: 'error',
@@ -237,6 +244,11 @@ function BatchPaymentsContent() {
     const resetTransaction = () => {
         setTxStatus({ state: 'idle', message: 'Ready to process payments' });
         setIsVisualizationComplete(false);
+        setShowAutoReset(false);
+        // Optional: Clear recipients? Or keep them for easier repeat?
+        // Usually safer to clear or keep. User asked for "refresh state".
+        // Let's reset recipients to default to avoid accidental double payment.
+        setRecipients([{ id: '1', address: '', amount: '', isValid: false }]);
     };
 
     // Determine if actively processing (transaction in progress OR waiting for visualization to complete)
@@ -257,9 +269,17 @@ function BatchPaymentsContent() {
                     className="h-full w-full"
                     color="#818cf8"
                     trailOpacity={0.1}
-                    speed={0.8}
+                    speed={0.5}
                 />
             </div>
+
+            {/* Auto Reset Toast */}
+            <AutoResetToast
+                isVisible={showAutoReset}
+                onReset={resetTransaction}
+                onCancel={() => setShowAutoReset(false)}
+                message="Batch Payment Completed."
+            />
 
             {/* Navigation - Fixed at top */}
             <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-6 px-8 lg:px-16 z-50 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">

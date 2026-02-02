@@ -1,23 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { WalletProvider, useWallet, ConnectWalletButton, NetworkBadge } from '@/app/contexts/WalletContext';
-import { lexendTera } from '@/app/components/Fonts';
+import { usePrivacyStore } from '@/app/store/privacyStore';
+// import { lexendTera } from '@/app/components/Fonts';
 import DepositForm from './components/DepositForm';
 import WithdrawForm from './components/WithdrawForm';
 import TransactionHistory from './components/TransactionHistory';
 import { HoverButton } from '../components/ui/hover-button';
-import { Component } from '../components/ui/living-oragami';
-import IsoLevelWarp from '../components/ui/isometric-ui';
+// import { Component } from '../components/ui/living-oragami';
+// import IsoLevelWarp from '../components/ui/isometric-ui';
 import NeuralBackground from '../components/ui/flow-field-background';
 type Tab = 'deposit' | 'withdraw';
 
 function PrivacyPayContent() {
   const router = useRouter();
-  const { walletState, formatAddress } = useWallet();
-  const { isConnected, address, network } = walletState;
+  const { walletState } = useWallet();
+  const { address } = walletState;
   const [activeTab, setActiveTab] = useState<Tab>('deposit');
+  const { startPolling, stopPolling } = usePrivacyStore();
+
+  useEffect(() => {
+    if (address) {
+      startPolling(address);
+    } else {
+      stopPolling();
+    }
+    return () => stopPolling();
+  }, [address, startPolling, stopPolling]);
 
   return (
 
@@ -27,10 +38,10 @@ function PrivacyPayContent() {
         className='min-h-screen top-0'
         color="#818cf8" // Indigo-400
         trailOpacity={0.1} // Lower = longer trails
-        speed={0.8}
+        speed={0.5}
       />
 
-      <div className="absolute min-h-screen top-0 text-white font-mono flex flex-col items-center justify-center w-full p-20">
+      <div className="absolute min-h-screen top-0 text-white font-mono flex flex-col justify-center w-full">
 
         {/* Navigation */}
         <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-6 px-8 lg:px-16 z-50 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -58,10 +69,10 @@ function PrivacyPayContent() {
         </nav>
 
         {/* Main Content */}
-        <div className="px-4 md:px-8 font-mono max-w-7xl mx-auto">
+        <div className="font-mono max-w-7xl mx-auto">
           <div className="mx-auto">
             {/* Header */}
-            <div className="text-center mb-8 mt-8">
+            <div className="text-center mb-8 mt-1">
 
               <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-6 drop-shadow-2xl">
                 <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-muted font-mono">
@@ -75,9 +86,9 @@ function PrivacyPayContent() {
             </div>
 
             {/* Main Grid */}
-            <div className="flex flex-row gap-5 max-w-5xl mx-auto">
+            <div className="flex flex-row gap-5 max-w-9xl mx-auto">
               {/* Left Column - Forms */}
-              <div className="space-y-4 max-w-3xl min-w-xl">
+              <div className="space-y-4 max-w-6xl min-w-2xl">
                 {/* Tab Switcher */}
                 <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
                   <HoverButton
