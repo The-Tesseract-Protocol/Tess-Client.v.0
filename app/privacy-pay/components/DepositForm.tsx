@@ -230,7 +230,7 @@ export default function DepositForm({ onSuccess }: DepositFormProps) {
      
 
       {/* Status Message */}
-      {getStatusMessage() && (
+      {getStatusMessage() && !isProcessing && (
         <div
           className={`flex items-center gap-3 p-4 rounded-xl ${
             status === 'success'

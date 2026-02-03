@@ -235,6 +235,8 @@ export function generateWalletNonce(): number {
 // Backend Integration (Deposits)
 // ============================================================================
 
+import { analyticsService } from '@/app/services/analyticsService';
+
 /**
  * Notify backend of successful deposit
  */
@@ -251,6 +253,16 @@ export async function notifyBackend(
     const depositorHash = await hashDepositorPublicKey(depositorPublicKey);
     const tokenPrice = getTokenPrice(token);
     const depositValueUsd = amount * tokenPrice;
+
+    // Track analytics event
+    analyticsService.trackEvent({
+      action: 'deposit',
+      amount: amount,
+      token: token.toUpperCase(),
+      tx_hash: txHash,
+      contract_address: CONFIG.TREASURY_CONTRACT_ID,
+      wallet_address: depositorPublicKey
+    });
 
     const payload = {
       depositorHash,
@@ -655,6 +667,15 @@ export async function submitWithdrawal(params: WithdrawParams): Promise<Withdraw
         error: `Relayer rejected withdrawal: ${response.status} - ${JSON.stringify(responseData)}`,
       };
     }
+
+    // Track analytics event
+    analyticsService.trackEvent({
+      action: 'withdrawal_request',
+      amount: totalAmount,
+      token: token.toUpperCase(),
+      count: Object.keys(recipients).length,
+      wallet_address: senderRawPublicKey ? undefined : params.senderPublicKey, // Use address if available directly, else undefined
+    });
 
     // Map response fields — relayer may use withdrawalRequestId/_id instead of requestId/jobId
     const requestId = responseData.requestId || responseData.withdrawalRequestId || responseData._id || responseData.jobId;

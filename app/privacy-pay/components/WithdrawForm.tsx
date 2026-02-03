@@ -474,7 +474,7 @@ ${hashesList}`;
 
       {/* Status Message */}
       {
-        getStatusMessage() && (
+        getStatusMessage() && !isProcessing && (
           <div
             className={`flex items-center gap-3 p-4 rounded-xl ${status === 'success'
               ? 'bg-green-500/10 border border-green-500/20'

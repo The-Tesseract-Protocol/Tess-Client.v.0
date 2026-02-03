@@ -1,0 +1,144 @@
+.chroma-carousel-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.chroma-track {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2rem;
+  width: max-content;
+  padding: 2rem 0; /* Add padding for scale/shadows */
+}
+
+.chroma-card {
+  position: relative;
+  flex: 0 0 auto;
+  width: 350px;
+  max-width: 80vw;
+  height: auto;
+  min-height: 250px;
+  background: #000;
+  border: 1px solid #333;
+  border-radius: 20px;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chroma-card:hover {
+  transform: scale(1.05);
+  border-color: transparent;
+  z-index: 10;
+}
+
+/* Gradient Border Pseudo Element */
+.chroma-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--card-gradient);
+  border-radius: 22px;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.chroma-card:hover::before {
+  opacity: 1;
+}
+
+/* Inner Content Styles */
+.chroma-content {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  background: #000; /* Ensure content covers the gradient behind it */
+  border-radius: 19px; /* slightly less than card */
+  flex-grow: 1;
+}
+
+.chroma-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chroma-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.chroma-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.chroma-header-text .name {
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0;
+  color: #fff;
+}
+
+.chroma-header-text .role {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin: 0;
+}
+
+.chroma-quote {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #ddd;
+  margin: 0;
+  font-style: italic;
+  flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+  .chroma-card {
+    width: 280px;
+  }
+  .chroma-track {
+    gap: 1rem;
+  }
+}
+
+.chroma-side-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100px;
+  z-index: 10;
+  pointer-events: none;
+}
+.chroma-side-fade.left {
+  left: 0;
+  background: linear-gradient(to right, #000, transparent);
+}
+.chroma-side-fade.right {
+  right: 0;
+  background: linear-gradient(to left, #000, transparent);
+}
+
+.chroma-track.justify-center {
+  width: 100%;
+  justify-content: center;
+}

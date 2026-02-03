@@ -1,0 +1,54 @@
+{
+  "overview": {
+    "totalVolumeUsd": 154200.50,
+    "totalContractCalls": 1245,
+    "totalWaitlistedUsers": 342,
+    "totalBatchesProcessed": 85,
+    "activePrivacyPool": 45000.00
+  },
+  "charts": {
+    "volumeHistory": [
+      { "date": "2024-02-01", "volume": 5000.00, "txCount": 12 },
+      { "date": "2024-02-02", "volume": 12500.00, "txCount": 24 },
+      { "date": "2024-02-03", "volume": 8200.00, "txCount": 18 },
+      { "date": "2024-02-04", "volume": 15000.00, "txCount": 31 },
+      { "date": "2024-02-05", "volume": 9500.00, "txCount": 15 },
+      { "date": "2024-02-06", "volume": 18200.00, "txCount": 42 },
+      { "date": "2024-02-07", "volume": 11000.00, "txCount": 22 },
+      { "date": "2024-02-08", "volume": 21000.00, "txCount": 35 },
+      { "date": "2024-02-09", "volume": 14500.00, "txCount": 28 },
+      { "date": "2024-02-10", "volume": 25000.00, "txCount": 45 },
+      { "date": "2024-02-11", "volume": 19000.00, "txCount": 33 },
+      { "date": "2024-02-12", "volume": 16500.00, "txCount": 29 },
+      { "date": "2024-02-13", "volume": 28000.00, "txCount": 51 },
+      { "date": "2024-02-14", "volume": 22500.00, "txCount": 38 }
+    ],
+    "waitlistHistory": [
+      { "date": "2024-02-01", "newUsers": 5 },
+      { "date": "2024-02-02", "newUsers": 12 },
+      { "date": "2024-02-03", "newUsers": 8 },
+      { "date": "2024-02-04", "newUsers": 15 },
+      { "date": "2024-02-05", "newUsers": 7 },
+      { "date": "2024-02-06", "newUsers": 22 },
+      { "date": "2024-02-07", "newUsers": 11 },
+      { "date": "2024-02-08", "newUsers": 18 },
+      { "date": "2024-02-09", "newUsers": 9 },
+      { "date": "2024-02-10", "newUsers": 25 },
+      { "date": "2024-02-11", "newUsers": 14 },
+      { "date": "2024-02-12", "newUsers": 10 },
+      { "date": "2024-02-13", "newUsers": 30 },
+      { "date": "2024-02-14", "newUsers": 21 }
+    ]
+  },
+  "breakdown": {
+    "byActionType": {
+      "deposits": 450,
+      "withdrawals": 320,
+      "batches": 475
+    },
+    "byToken": {
+      "usdc": 120000.00,
+      "xlm": 34200.50
+    }
+  }
+}

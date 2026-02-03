@@ -10,6 +10,7 @@ import {
     Account,
     Networks,
 } from '@stellar/stellar-sdk';
+import { analyticsService } from '@/app/services/analyticsService';
 
 // ==================== CONFIGURATION ====================
 
@@ -472,6 +473,75 @@ export class BulkPaymentService {
         }
 
         if (txStatus.status === 'SUCCESS') {
+            
+            // Extract analytics data from auth entry
+            let userAddress = '';
+            let recipientCount = 0;
+            let totalAmountXlm = 0;
+
+            try {
+                // Extract user address
+                const addressScVal = signedAuthEntry.credentials().address().address();
+                userAddress = Address.fromScAddress(addressScVal).toString();
+
+                // Extract recipient count and total amount
+                const args = rootInvocation.function().contractFn().args();
+                // args[0] = user, args[1] = batches (Vec<Map>), args[2] = token
+                const batchesVec = args[1].vec();
+                
+                if (batchesVec) {
+                    let totalStroops = 0n;
+
+                    batchesVec.forEach((batchScVal) => {
+                        const batchMap = batchScVal.map();
+                        if (batchMap) {
+                            // Find recipients and amounts entries
+                            const recipientsEntry = batchMap.find(entry => entry.key().sym().toString() === 'recipients');
+                            const amountsEntry = batchMap.find(entry => entry.key().sym().toString() === 'amounts');
+
+                            if (recipientsEntry) {
+                                const recipientsVec = recipientsEntry.val().vec();
+                                if (recipientsVec) {
+                                    recipientCount += recipientsVec.length;
+                                }
+                            }
+
+                            if (amountsEntry) {
+                                const amountsVec = amountsEntry.val().vec();
+                                if (amountsVec) {
+                                    amountsVec.forEach(amountScVal => {
+                                        // i128 is split into hi/lo parts in XDR
+                                        const i128 = amountScVal.i128();
+                                        const low = BigInt(i128.lo().toString());
+                                        const high = BigInt(i128.hi().toString());
+                                        // Reconstruct BigInt: (high << 64) + low
+                                        // Note: Assuming positive amounts for simplicity here
+                                        const amountBigInt = (high << 64n) + low;
+                                        totalStroops += amountBigInt;
+                                    });
+                                }
+                            }
+                        }
+                    });
+
+                    // Convert total stroops to XLM
+                    totalAmountXlm = Number(totalStroops) / Number(SAFE_LIMITS.STROOPS_PER_XLM);
+                }
+            } catch (err) {
+                console.warn('Failed to extract analytics data from auth entry:', err);
+            }
+
+            // Track analytics event with extracted data
+            analyticsService.trackEvent({
+                action: 'batch_execution',
+                tx_hash: sendResponse.hash,
+                contract_address: this.orchestratorContract,
+                token: 'XLM',
+                amount: totalAmountXlm,
+                count: recipientCount,
+                wallet_address: userAddress,
+            });
+
             return {
                 success: true,
                 hash: sendResponse.hash,

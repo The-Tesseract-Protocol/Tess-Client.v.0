@@ -6,6 +6,7 @@ import Navbar from "./landing/Navbar";
 import OverviewSection from "./landing/OverSection";
 import Footer from './landing/Footer';
 import TestimonialsSection from './landing/testimonial';
+import CleanWireframeAnalytics from './analytics/page';
 
 export default function Home() {
   return (
@@ -27,7 +28,9 @@ export default function Home() {
 
         <Features />
 
-        <TestimonialsSection/>
+        <TestimonialsSection />
+        
+        <CleanWireframeAnalytics />
         <Footer />
 
 

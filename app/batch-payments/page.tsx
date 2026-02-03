@@ -483,7 +483,7 @@ function BatchPaymentsContent() {
                             </button>
 
                             {/* Status Message */}
-                            {txStatus.state !== 'idle' && (
+                            {txStatus.state !== 'idle' && !isProcessing && (
                                 <div className={`p-4 rounded-2xl border backdrop-blur-md ${
                                     txStatus.state === 'error' ? 'bg-red-500/10 border-red-500/20' :
                                     txStatus.state === 'success' ? 'bg-green-500/10 border-green-500/20' :

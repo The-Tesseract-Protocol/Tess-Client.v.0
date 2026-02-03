@@ -3,38 +3,41 @@ import Image from "next/image";
 
 const Footer = () => {
     return (
-        <footer className="relative h-screen w-full overflow-hidden bg-black text-white">
+        <footer className="relative h-[200px] w-full overflow-hidden bg-black text-white">
             {/* 1. Background Video Layer */}
             <video
-                src="/bg-collage-video.mp4"
+                src="/bg-vid-lp.mp4"
                 loop
                 muted
                 autoPlay
                 playsInline
-                className="absolute top-0 left-0 w-full h-full object-cover opacity-70"
+                className="absolute top-0 left-0 w-full h-full object-cover"
             />
 
-            {/* Optional: Overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-black/40" />
-
-            {/* 2. Content Layer */}
-            <div className="relative z-10 flex h-full w-full flex-col items-center justify-center p-8">
-
-                {/* Main Center Content */}
-                <div className="flex flex-col items-center gap-6 text-center">
-                    <h1 className={`text-[12vw] md:text-[9rem] font-bold tracking-tighter ${lexendTera.className} leading-none select-none`}>
+            {/* 2. Mask Layer - Multiplies with video (White Text -> Video, Black BG -> Black) */}
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black mix-blend-multiply">
+                 <div className="flex flex-col items-center gap-6 text-center">
+                    <h1 className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-white`}>
                         TESSERACT
                     </h1>
-                    <p className="text-white/80 text-sm md:text-lg font-light tracking-wide max-w-4xl">
-                        Functional Privacy For Institutions.
-                    </p>
-                    <p className="text-white/80 text-sm md:text-lg font-light tracking-wide max-w-4xl">
-                        Compliant Confidential Auditable Payments on Stellar.
-                    </p>
-                </div>
+                 </div>
+            </div>
 
-                {/* Bottom Bar (Absolute within the relative container) */}
-                <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between">
+            {/* 3. Overlay Layer - Interactive Elements */}
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-8 pointer-events-none">
+                <div className="flex flex-col items-center gap-6 text-center pointer-events-auto">
+                    {/* Placeholder Text to keep layout spacing, but fully transparent (no border) */}
+                    <h1 
+                        className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-transparent `}
+                    >
+                        TESSERACT
+                    </h1>
+                    
+                   
+                </div>
+                
+                 {/* Bottom Bar */}
+                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between pointer-events-auto">
 
                     {/* Left - Built on Stellar */}
                     <div className="flex items-center gap-3 text-white/60 text-sm backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10">
