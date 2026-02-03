@@ -34,6 +34,12 @@ export interface DashboardMetricsResponse {
       date: string;
       volume: number;
       txCount: number;
+      depositCount?: number;
+      depositVolume?: number;
+      withdrawalCount?: number;
+      withdrawalVolume?: number;
+      batchCount?: number;
+      batchVolume?: number;
     }>;
     waitlistHistory: Array<{
       date: string;

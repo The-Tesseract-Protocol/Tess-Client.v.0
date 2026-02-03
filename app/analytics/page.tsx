@@ -106,6 +106,14 @@ const DarkAnalyticsDashboard = () => {
     const maxVolume = Math.max(...volumes) * 1.1 || 100;
     const maxTxCount = Math.max(...txCounts) * 1.1 || 10;
 
+    // Derived 30-day totals
+    const totalDeposits = history.reduce((acc, curr) => acc + (curr.depositCount || 0), 0);
+    const totalDepositVol = history.reduce((acc, curr) => acc + (curr.depositVolume || 0), 0);
+    const totalWithdrawals = history.reduce((acc, curr) => acc + (curr.withdrawalCount || 0), 0);
+    const totalWithdrawalVol = history.reduce((acc, curr) => acc + (curr.withdrawalVolume || 0), 0);
+    const totalBatches = history.reduce((acc, curr) => acc + (curr.batchCount || 0), 0);
+    const totalBatchVol = history.reduce((acc, curr) => acc + (curr.batchVolume || 0), 0);
+
     // --- Helper for Smooth Bezier Curves ---
     const generateSmoothPath = (values: number[], maxValue: number, height = 300, isArea = false) => {
         const width = 800;
@@ -392,24 +400,65 @@ const DarkAnalyticsDashboard = () => {
                                 className="absolute top-0 pointer-events-none transition-all duration-75 ease-out z-20"
                                 style={{ 
                                     left: `${(dates.length > 1 ? hoveredPoint / (dates.length - 1) : 0.5) * 100}%`,
-                                    transform: `translateX(-50%) translateY(-120%)` // Shift up
+                                    transform: `translateX(-50%) translateY(-110%)` // Shift up
                                 }}
                             >
-                                <div className="bg-neutral-900/90 backdrop-blur-md border border-white/10 p-3 rounded-xl shadow-2xl min-w-[140px]">
-                                    <div className="text-neutral-400 text-xs mb-1 border-b border-white/5 pb-1">
+                                <div className="bg-neutral-900/95 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-2xl min-w-[200px]">
+                                    <div className="text-neutral-400 text-xs mb-3 border-b border-white/5 pb-2 font-mono">
                                         {dates[hoveredPoint]}
                                     </div>
-                                    <div className="flex justify-between items-center text-sm font-medium text-white mb-0.5">
-                                        <span className="text-blue-400 text-xs">Vol</span>
-                                        {currencyFormatter.format(volumes[hoveredPoint])}
+                                    
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] uppercase tracking-wider text-neutral-500">Volume</span>
+                                            <span className="text-lg font-light text-blue-400">
+                                                {currencyFormatter.format(volumes[hoveredPoint])}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] uppercase tracking-wider text-neutral-500">Txns</span>
+                                            <span className="text-lg font-light text-white">
+                                                {txCounts[hoveredPoint]}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between items-center text-sm font-medium text-white">
-                                        <span className="text-neutral-500 text-xs">Txns</span>
-                                        {txCounts[hoveredPoint]}
+
+                                    {/* Detailed Breakdown */}
+                                    <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/80"></div>
+                                                <span className="text-neutral-400">Deposits</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-neutral-500">{history[hoveredPoint].depositCount || 0}</span>
+                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].depositVolume || 0)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500/80"></div>
+                                                <span className="text-neutral-400">Withdrawals</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-neutral-500">{history[hoveredPoint].withdrawalCount || 0}</span>
+                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].withdrawalVolume || 0)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500/80"></div>
+                                                <span className="text-neutral-400">Batches</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-neutral-500">{history[hoveredPoint].batchCount || 0}</span>
+                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].batchVolume || 0)}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 {/* Tooltip Arrow */}
-                                <div className="w-2 h-2 bg-neutral-900 border-r border-b border-white/10 rotate-45 mx-auto -mt-1"></div>
+                                <div className="w-3 h-3 bg-neutral-900 border-r border-b border-white/10 rotate-45 mx-auto -mt-1.5"></div>
                             </div>
                         )}
                     </div>
@@ -425,6 +474,37 @@ const DarkAnalyticsDashboard = () => {
                             )
                         ))}
                     </div>
+                </div>
+
+                {/* 30-Day Activity Breakdown */}
+                <div 
+                    className={`
+                        grid grid-cols-1 md:grid-cols-3 gap-6 mb-8
+                        transition-all duration-1000 ease-out delay-200
+                        ${animationPhase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
+                    `}
+                >
+                     <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col">
+                        <span className="text-xs uppercase tracking-wider text-neutral-500 mb-1">Total Deposits (30d)</span>
+                        <div className="flex items-baseline justify-between">
+                             <span className="text-2xl font-light text-emerald-400">{currencyFormatter.format(totalDepositVol)}</span>
+                             <span className="text-sm text-neutral-400">{totalDeposits} txs</span>
+                        </div>
+                     </div>
+                     <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col">
+                        <span className="text-xs uppercase tracking-wider text-neutral-500 mb-1">Total Withdrawals (30d)</span>
+                        <div className="flex items-baseline justify-between">
+                             <span className="text-2xl font-light text-rose-400">{currencyFormatter.format(totalWithdrawalVol)}</span>
+                             <span className="text-sm text-neutral-400">{totalWithdrawals} txs</span>
+                        </div>
+                     </div>
+                     <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col">
+                        <span className="text-xs uppercase tracking-wider text-neutral-500 mb-1">Batches Processed (30d)</span>
+                        <div className="flex items-baseline justify-between">
+                             <span className="text-2xl font-light text-purple-400">{currencyFormatter.format(totalBatchVol)}</span>
+                             <span className="text-sm text-neutral-400">{totalBatches} batches</span>
+                        </div>
+                     </div>
                 </div>
 
                 <p className="text-red-700 font-light text-sm border border-red-500 p-2 rounded-4xl w-auto text-center">

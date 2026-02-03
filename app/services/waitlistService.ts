@@ -33,6 +33,12 @@ export const joinWaitlist = async (data: WaitlistServiceConfig) => {
         throw new Error(errorData.message || 'Failed to join waitlist');
     }
 
+    // Track analytics event
+    analyticsService.trackEvent({
+        action: 'waitlist_signup',
+        institution_name: data.institutionName
+    });
+
     return response.json();
 }
 
