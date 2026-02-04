@@ -1,11 +1,22 @@
 import { lexendTera } from "../components/Fonts";
 import Image from "next/image";
 
+import { useRef, useEffect } from "react";
+
 const Footer = () => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.playbackRate = 0.75;
+        }
+    }, []);
+
     return (
         <footer className="relative h-[200px] w-full overflow-hidden bg-black text-white">
             {/* 1. Background Video Layer */}
             <video
+                ref={videoRef}
                 src="/bg-vid-lp.mp4"
                 loop
                 muted
@@ -16,28 +27,28 @@ const Footer = () => {
 
             {/* 2. Mask Layer - Multiplies with video (White Text -> Video, Black BG -> Black) */}
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black mix-blend-multiply">
-                 <div className="flex flex-col items-center gap-6 text-center">
+                <div className="flex flex-col items-center gap-6 text-center">
                     <h1 className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-white`}>
                         TESSERACT
                     </h1>
-                 </div>
+                </div>
             </div>
 
             {/* 3. Overlay Layer - Interactive Elements */}
             <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-8 pointer-events-none">
                 <div className="flex flex-col items-center gap-6 text-center pointer-events-auto">
                     {/* Placeholder Text to keep layout spacing, but fully transparent (no border) */}
-                    <h1 
+                    <h1
                         className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-transparent `}
                     >
                         TESSERACT
                     </h1>
-                    
-                   
+
+
                 </div>
-                
-                 {/* Bottom Bar */}
-                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between pointer-events-auto">
+
+                {/* Bottom Bar */}
+                <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between pointer-events-auto">
 
                     {/* Left - Built on Stellar */}
                     <div className="flex items-center gap-3 text-white/60 text-sm backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10">
@@ -54,7 +65,7 @@ const Footer = () => {
 
                     {/* Right - Social Links */}
                     <div className="flex items-center gap-6 backdrop-blur-sm bg-black/20 px-6 py-2 rounded-full border border-white/10">
-                        
+
                         <a
                             href="https://github.com/The-Tesseract-Protocol"
                             target="_blank"

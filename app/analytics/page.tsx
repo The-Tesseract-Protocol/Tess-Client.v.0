@@ -1,12 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { analyticsService, DashboardMetricsResponse } from '../services/analyticsService';
+import { DashboardMetricsResponse } from '../services/analyticsService';
+import { useAnalyticsStore } from '../store/analyticsStore';
 
 const DarkAnalyticsDashboard = () => {
-    const [metricsData, setMetricsData] = useState<DashboardMetricsResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    const { 
+        metricsData, 
+        isLoading: loading, 
+        error, 
+        startPolling, 
+        stopPolling 
+    } = useAnalyticsStore();
 
     // Animation states
     const [animationPhase, setAnimationPhase] = useState(0);
@@ -17,23 +22,9 @@ const DarkAnalyticsDashboard = () => {
     const selectedPeriod = 'Last 30 days';
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                // Simulate slightly longer loading for effect
-                await new Promise(r => setTimeout(r, 600));
-                const data = await analyticsService.getMetrics();
-                setMetricsData(data);
-                setLoading(false);
-            } catch (err) {
-                console.error("Failed to fetch analytics:", err);
-                setError(true);
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
+        startPolling();
+        return () => stopPolling();
+    }, [startPolling, stopPolling]);
 
     // Trigger staged animations
     useEffect(() => {
@@ -218,7 +209,7 @@ const DarkAnalyticsDashboard = () => {
                         <div
                             key={card.label}
                             className={`
-                                bg-white/[0.03] backdrop-blur-xl border border-white/5 rounded-2xl p-6
+                                bg-white/[0.03] backdrop-blur-xl border border-white/15 rounded-2xl p-6
                                 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-500
                                 ${animationPhase >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                             `}
@@ -236,7 +227,7 @@ const DarkAnalyticsDashboard = () => {
 
                         <div
                             className={`
-                            bg-white/[0.03] backdrop-blur-md border border-white/5 rounded-2xl p-6
+                            bg-white/[0.03] backdrop-blur-md border border-white/15 rounded-2xl p-6
                             transition-all duration-700 delay-500
                             ${animationPhase >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
                         `}
@@ -267,7 +258,7 @@ const DarkAnalyticsDashboard = () => {
                 {/* Main Chart Section */}
                 <div 
                     className={`
-                        relative bg-white/[0.02] backdrop-blur-sm border border-white/5 rounded-3xl p-8 mb-8
+                        relative bg-white/[0.02] backdrop-blur-sm border border-white/15 rounded-3xl p-8 mb-8
                         transition-all duration-1000 ease-out
                         ${animationPhase >= 3 ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'}
                     `}
