@@ -67,10 +67,10 @@ export function TestimonialsSection() {
 					warpAmount={0}
 				/>
 			</div>
-			<div className='w-[70vw] text-center mb-10 z-10'>
+			<div className='w-full px-6 md:w-[80vw] lg:w-[70vw] text-center mb-10 z-10'>
 				<h1 className="text-3xl md:text-5xl font-bold text-white z-10">What Our Users Say</h1>
 			</div>
-			<div className="z-10 relative w-[70vw]">
+			<div className="z-10 relative w-full px-6 md:w-[80vw] lg:w-[70vw]">
 				<ChromaGrid
 					items={testimonials}
 				/>

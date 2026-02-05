@@ -54,12 +54,12 @@ export default function TransactionHistory() {
   const isEmpty = activeTab === 'deposits' ? deposits.length === 0 : withdrawals.length === 0;
 
   return (
-    <div className="flex flex-col max-h-[70vh] overflow-y-scroll">
+    <div className="flex flex-col max-h-[50vh] md:max-h-[70vh] overflow-y-auto custom-scrollbar">
       {/* Tabs */}
-      <div className="flex p-1 bg-white/5 rounded-xl mb-4">
+      <div className="flex p-1 bg-white/5 rounded-xl mb-4 shrink-0">
         <button
           onClick={() => setActiveTab('deposits')}
-          className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs md:text-sm font-medium rounded-lg transition-all ${
             activeTab === 'deposits'
               ? 'bg-white/10 text-white shadow-sm'
               : 'text-white/40 hover:text-white/60'
@@ -69,7 +69,7 @@ export default function TransactionHistory() {
         </button>
         <button
           onClick={() => setActiveTab('withdrawals')}
-          className={`flex-1 py-2 text-xs font-medium rounded-lg transition-all ${
+          className={`flex-1 py-2 text-xs md:text-sm font-medium rounded-lg transition-all ${
             activeTab === 'withdrawals'
               ? 'bg-white/10 text-white shadow-sm'
               : 'text-white/40 hover:text-white/60'
@@ -80,7 +80,7 @@ export default function TransactionHistory() {
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-scoll pr-2 -mr-2 space-y-3 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-3 scrollbar-hide">
         {isLoading && activeTab === 'deposits' && deposits.length === 0 && (
           <div className="text-center py-8 text-white/30 text-xs animate-pulse">Loading deposits...</div>
         )}
@@ -99,11 +99,11 @@ export default function TransactionHistory() {
         {activeTab === 'deposits' && deposits.map((deposit) => (
           <div
             key={deposit.hashLN}
-            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-4 transition-all duration-300"
+            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-3 md:p-4 transition-all duration-300"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform shrink-0">
                   <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                   </svg>
@@ -115,7 +115,7 @@ export default function TransactionHistory() {
                   <div className="text-white/30 text-[10px]">{formatDate(deposit.timestamp)}</div>
                 </div>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${getStatusColor(deposit.status)}`}>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${getStatusColor(deposit.status)}`}>
                 {deposit.status}
               </span>
             </div>
@@ -123,7 +123,7 @@ export default function TransactionHistory() {
             <div className="space-y-1.5 pt-2 border-t border-white/5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-white/30">Hash</span>
-                <span className="text-white/50 font-mono text-[10px] bg-black/20 px-1.5 py-0.5 rounded">
+                <span className="text-white/50 font-mono text-[10px] bg-black/20 px-1.5 py-0.5 rounded truncate max-w-[120px]">
                   {deposit.hashLN.slice(0, 12)}...
                 </span>
               </div>
@@ -150,11 +150,11 @@ export default function TransactionHistory() {
         {activeTab === 'withdrawals' && withdrawals.map((withdrawal) => (
           <div
             key={withdrawal.requestId}
-            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-4 transition-all duration-300 overflow-y-scroll"
+            className="group bg-white/2 hover:bg-white/5 border border-white/10 hover:border-white/10 rounded-2xl p-3 md:p-4 transition-all duration-300"
           >
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform">
+                <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center border border-purple-500/20 group-hover:scale-110 transition-transform shrink-0">
                   <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                   </svg>
@@ -166,7 +166,7 @@ export default function TransactionHistory() {
                   <div className="text-white/30 text-[10px]">{formatDate(withdrawal.timestamp)}</div>
                 </div>
               </div>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${getStatusColor(withdrawal.status)}`}>
+              <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-bold border ${getStatusColor(withdrawal.status)}`}>
                 {withdrawal.status === 'processing' ? 'Processing' : withdrawal.status}
               </span>
             </div>
@@ -179,7 +179,7 @@ export default function TransactionHistory() {
                 </span>
               </div>
               {withdrawal.txHashes && withdrawal.txHashes.length > 0 ? (
-                <div className="space-y-1 max-h-[80px] overflow-scroll">
+                <div className="space-y-1 max-h-[80px] overflow-y-auto custom-scrollbar">
                   {withdrawal.txHashes.map((hash, idx) => (
                     <div key={hash} className="flex justify-between items-center text-xs">
                       <span className="text-white/30">{idx === 0 ? 'Tx' : ''}</span>

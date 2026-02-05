@@ -20,11 +20,11 @@ export default function Dashboard() {
       </div>
 
       {/* Navbar */}
-      <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-8 px-16 z-50">
-        <div className="flex items-center gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden p-2">
+      <nav className="absolute top-0 left-0 w-full flex items-center justify-between py-4 px-4 md:py-8 md:px-16 z-50">
+        <div className="flex items-center gap-x-4 md:gap-x-8 backdrop-blur-lg bg-black/40 rounded-3xl overflow-hidden p-1.5 md:p-2">
           <Link href="/" className="text-white/80 hover:text-white transition-colors flex items-center">
-            <Image src="/Tess-W.png" alt="Tesseract Logo" width={32} height={32} className="h-8 w-8 mr-2 rounded-2xl font-mono" />
-            <span className="font-mono">TESSERACT</span>
+            <Image src="/Tess-W.png" alt="Tesseract Logo" width={32} height={32} className="h-7 w-7 md:h-8 md:w-8 mr-2 rounded-2xl font-mono" />
+            <span className="font-mono hidden sm:inline">TESSERACT</span>
           </Link>
         </div>
       </nav>

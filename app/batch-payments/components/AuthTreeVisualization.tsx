@@ -310,64 +310,65 @@ export default function AuthTreeVisualization({
       )}
 
       {/* Tree Visualization */}
-      <div className="relative">
-        {/* Orchestrator Level */}
-        <div className="flex flex-col items-center">
-          <TreeNode
-            label="Orchestrator"
-            sublabel="orchestrate_payments()"
-            status={getNodeStatus(0, 1)}
-            isRoot
-          />
+      <div className="relative overflow-x-auto pb-4">
+        <div className="min-w-[300px]">
+          {/* Orchestrator Level */}
+          <div className="flex flex-col items-center">
+            <TreeNode
+              label="Orchestrator"
+              sublabel="orchestrate_payments()"
+              status={getNodeStatus(0, 1)}
+              isRoot
+            />
 
-          {/* Connection Lines */}
-          {batches.length > 0 && (
-            <div className="relative w-full mt-4 mb-4">
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/5" />
-              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[80%] h-px bg-white/20" />
-            </div>
-          )}
+            {/* Connection Lines */}
+            {batches.length > 0 && (
+              <div className="relative w-full mt-4 mb-4">
+                <div className="absolute left-1/2 transform -translate-x-1/2 w-px h-6 bg-white/5" />
+                <div className="absolute top-6 left-1/2 transform -translate-x-1/2 w-[80%] h-px bg-white/20" />
+              </div>
+            )}
 
-          {/* Worker Level */}
-          <div className="flex flex-wrap justify-center gap-4 w-full">
-            {batches.map((batch, workerIndex) => {
-              const nodesBeforeWorker = 1 + workerIndex * (1 + Math.max(...batches.map(b => b.recipientCount)));
-              const workerStatus = getNodeStatus(workerIndex + 1, nodesBeforeWorker / totalNodes);
+            {/* Worker Level */}
+            <div className="flex flex-wrap justify-center gap-4 w-full">
+              {batches.map((batch, workerIndex) => {
+                const nodesBeforeWorker = 1 + workerIndex * (1 + Math.max(...batches.map(b => b.recipientCount)));
+                const workerStatus = getNodeStatus(workerIndex + 1, nodesBeforeWorker / totalNodes);
 
-              return (
-                <div key={workerIndex} className="flex flex-col items-center">
-                  {/* Vertical line from horizontal connector */}
-                  <div className="w-px h-4 bg-white/20" />
+                return (
+                  <div key={workerIndex} className="flex flex-col items-center">
+                    {/* Vertical line from horizontal connector */}
+                    <div className="w-px h-4 bg-white/20" />
 
-                  <TreeNode
-                    label={`Worker ${workerIndex + 1}`}
-                    sublabel={`batch_pay() - ${batch.recipientCount} transfers`}
-                    status={workerStatus}
-                  />
+                    <TreeNode
+                      label={`Worker ${workerIndex + 1}`}
+                      sublabel={`batch_pay() - ${batch.recipientCount} transfers`}
+                      status={workerStatus}
+                    />
 
-                  {/* Transfer indicators */}
-                  <div className="mt-3 flex flex-wrap justify-center gap-1 max-w-[120px]">
-                    {Array.from({ length: batch.recipientCount }, (_, i) => {
-                      const transferNodeIndex = nodesBeforeWorker + 1 + i;
-                      const transferStatus = getNodeStatus(transferNodeIndex, transferNodeIndex / totalNodes);
-                      return (
-                        <div
-                          key={i}
-                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                            transferStatus === 'complete'
-                              ? 'bg-green-500'
-                              : transferStatus === 'active'
-                              ? 'bg-blue-500 animate-pulse'
-                              : 'bg-white/20'
-                          }`}
-                          title={`Transfer ${i + 1}`}
-                        />
-                      );
-                    })}
+                    {/* Transfer indicators */}
+                    <div className="mt-3 flex flex-wrap justify-center gap-1 max-w-[120px]">
+                      {Array.from({ length: batch.recipientCount }, (_, i) => {
+                        const transferNodeIndex = nodesBeforeWorker + 1 + i;
+                        const transferStatus = getNodeStatus(transferNodeIndex, transferNodeIndex / totalNodes);
+                        return (
+                          <div
+                            key={i}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${transferStatus === 'complete'
+                                ? 'bg-green-500'
+                                : transferStatus === 'active'
+                                  ? 'bg-blue-500 animate-pulse'
+                                  : 'bg-white/20'
+                              }`}
+                            title={`Transfer ${i + 1}`}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

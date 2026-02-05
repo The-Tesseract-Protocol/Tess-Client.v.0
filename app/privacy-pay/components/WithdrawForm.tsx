@@ -431,7 +431,7 @@ ${hashesList}`;
         <label className="block text-sm font-medium text-white/60 mb-2">
           Select Pool
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {Object.entries(SUPPORTED_TOKENS).map(([key, config]) => (
             <button
               key={key}

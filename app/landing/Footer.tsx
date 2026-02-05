@@ -13,7 +13,7 @@ const Footer = () => {
     }, []);
 
     return (
-        <footer className="relative h-[200px] w-full overflow-hidden bg-black text-white">
+        <footer className="relative min-h-[200px] md:h-[300px] w-full overflow-hidden bg-black text-white">
             {/* 1. Background Video Layer */}
             <video
                 ref={videoRef}
@@ -28,7 +28,7 @@ const Footer = () => {
             {/* 2. Mask Layer - Multiplies with video (White Text -> Video, Black BG -> Black) */}
             <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-8 bg-black mix-blend-multiply">
                 <div className="flex flex-col items-center gap-6 text-center">
-                    <h1 className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-white`}>
+                    <h1 className={`text-[15vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-white`}>
                         TESSERACT
                     </h1>
                 </div>
@@ -39,7 +39,7 @@ const Footer = () => {
                 <div className="flex flex-col items-center gap-6 text-center pointer-events-auto">
                     {/* Placeholder Text to keep layout spacing, but fully transparent (no border) */}
                     <h1
-                        className={`text-[12vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-transparent `}
+                        className={`text-[15vw] md:text-[9rem] font-extrabold tracking-tighter ${lexendTera.className} leading-none select-none text-transparent `}
                     >
                         TESSERACT
                     </h1>
@@ -48,17 +48,17 @@ const Footer = () => {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between pointer-events-auto">
+                <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8 flex flex-col md:flex-row items-center md:items-end justify-center md:justify-between gap-4 pointer-events-auto">
 
                     {/* Left - Built on Stellar */}
-                    <div className="flex items-center gap-3 text-white/60 text-sm backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10">
+                    <div className="flex items-center gap-3 text-white/60 text-xs md:text-sm backdrop-blur-sm bg-black/20 px-4 py-2 rounded-full border border-white/10">
                         <span>Built on</span>
                         <Image
                             src="https://cryptologos.cc/logos/stellar-xlm-logo.svg?v=040"
                             alt="Stellar"
                             width={20}
                             height={20}
-                            className="bg-white rounded-full p-1"
+                            className="bg-white rounded-full p-1 w-4 h-4 md:w-5 md:h-5"
                         />
                         <span className="font-medium text-white">Stellar Soroban</span>
                     </div>

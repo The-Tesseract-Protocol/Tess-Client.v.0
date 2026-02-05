@@ -278,71 +278,73 @@ export default function RecipientsInput({
       )}
       {/* Recipients Table */}
       <div className="bg-black/20 rounded-xl border border-white/10 overflow-hidden">
-        {/* Table Header */}
-        <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/3 border-b border-white/10">
-          <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
-            Recipient Address
-          </div>
-          <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
-            Amount (XLM)
-          </div>
-          <div></div>
-        </div>
-
-        {/* Table Body */}
-        <div className="h-[150px] overflow-y-auto">
-          {recipients.map((recipient) => (
-            <div
-              key={recipient.id}
-              className={`grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-2 border-b border-white/5 ${
-                !recipient.isValid && (recipient.address || recipient.amount)
-                  ? 'bg-red-500/5'
-                  : ''
-              }`}
-            >
-              {/* Address Input */}
-              <div className="relative">
-                <input
-                  type="text"
-                  value={recipient.address}
-                  onChange={(e) => updateRecipient(recipient.id, 'address', e.target.value)}
-                  placeholder="G..."
-                  className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:ring-0 ${
-                    !recipient.isValid && recipient.address ? 'text-red-400' : ''
-                  }`}
-                  disabled={disabled}
-                />
-                {recipient.error && recipient.address && (
-                  <div className="absolute -bottom-4 left-0 text-xs text-red-400">
-                    {recipient.error}
-                  </div>
-                )}
+        <div className="overflow-x-auto">
+          <div className="min-w-[500px]">
+            {/* Table Header */}
+            <div className="grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-3 bg-white/3 border-b border-white/10">
+              <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                Recipient Address
               </div>
-
-              {/* Amount Input */}
-              <input
-                type="number"
-                step="0.0000001"
-                min="0"
-                value={recipient.amount}
-                onChange={(e) => updateRecipient(recipient.id, 'amount', e.target.value)}
-                placeholder="0.00"
-                className="w-full bg-transparent border-0 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-0"
-                disabled={disabled}
-              />
-
-              {/* Remove Button */}
-              <button
-                onClick={() => removeRecipient(recipient.id)}
-                className="flex items-center justify-center text-white/30 hover:text-red-400 transition-colors"
-                disabled={disabled || recipients.length <= 1}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <div className="text-xs font-medium text-white/60 uppercase tracking-wider">
+                Amount (XLM)
+              </div>
+              <div></div>
             </div>
-          ))}
+
+            {/* Table Body */}
+            <div className="h-[150px] overflow-y-auto">
+              {recipients.map((recipient) => (
+                <div
+                  key={recipient.id}
+                  className={`grid grid-cols-[1fr_120px_40px] gap-2 px-4 py-2 border-b border-white/5 ${!recipient.isValid && (recipient.address || recipient.amount)
+                      ? 'bg-red-500/5'
+                      : ''
+                    }`}
+                >
+                  {/* Address Input */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={recipient.address}
+                      onChange={(e) => updateRecipient(recipient.id, 'address', e.target.value)}
+                      placeholder="G..."
+                      className={`w-full bg-transparent border-0 text-sm font-mono text-white placeholder-white/50 focus:outline-none focus:ring-0 ${!recipient.isValid && recipient.address ? 'text-red-400' : ''
+                        }`}
+                      disabled={disabled}
+                    />
+                    {recipient.error && recipient.address && (
+                      <div className="absolute -bottom-4 left-0 text-xs text-red-400">
+                        {recipient.error}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Amount Input */}
+                  <input
+                    type="number"
+                    step="0.0000001"
+                    min="0"
+                    value={recipient.amount}
+                    onChange={(e) => updateRecipient(recipient.id, 'amount', e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-transparent border-0 text-sm text-white placeholder-white/50 focus:outline-none focus:ring-0"
+                    disabled={disabled}
+                  />
+
+                  {/* Remove Button */}
+                  <button
+                    onClick={() => removeRecipient(recipient.id)}
+                    className="flex items-center justify-center text-white/30 hover:text-red-400 transition-colors"
+                    disabled={disabled || recipients.length <= 1}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Add Row Button */}
@@ -361,7 +363,7 @@ export default function RecipientsInput({
       </div>
 
       {/* Summary Stats */}
-      <div className={`grid ${showBatches ? 'grid-cols-3' : 'grid-cols-2'} gap-4 p-4 bg-white/2 rounded-xl`}>
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${showBatches ? 'lg:grid-cols-3' : ''} gap-4 p-4 bg-white/2 rounded-xl`}>
         <div>
           <div className="text-xs text-white/40 mb-1">Valid Recipients</div>
           <div className="text-lg font-semibold text-white">

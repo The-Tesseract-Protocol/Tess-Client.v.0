@@ -7,7 +7,7 @@ import { Plasma } from '../../components/Plasma';
 
 export default function Features() {
   return (
-    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-24 bg-transparent">
+    <section className="relative min-h-screen w-full flex items-center justify-center overflow-hidden py-12 md:py-24 bg-transparent">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <Plasma
@@ -21,8 +21,8 @@ export default function Features() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-7xl bg-transparent">
-        <div className="text-center mb-20 space-y-4">
+      <div className="relative z-10 container mx-auto px-6 md:px-16 max-w-7xl bg-transparent">
+        <div className="text-center mb-12 md:mb-20 space-y-4">
           <h2 className="text-3xl md:text-5xl font-bold font-mono tracking-tighter text-white drop-shadow-2xl">
             Core Features
           </h2>
