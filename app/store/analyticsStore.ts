@@ -47,10 +47,10 @@ export const useAnalyticsStore = create<AnalyticsState>((set, get) => ({
     
     get().fetchData().finally(() => set({ isLoading: false }));
     
-    // Poll every 10 minutes (600,000 ms)
+    // Poll every 5 minutes (300,000 ms)
     pollInterval = setInterval(() => {
       get().fetchData();
-    }, 600000); 
+    }, 300000); 
   },
 
   stopPolling: () => {

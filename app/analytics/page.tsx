@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { DashboardMetricsResponse } from '../services/analyticsService';
+import * as React from 'react';
 import { useAnalyticsStore } from '../store/analyticsStore';
+import VolumeChart from './components/VolumeChart';
 
 const DarkAnalyticsDashboard = () => {
     const { 
@@ -14,33 +14,30 @@ const DarkAnalyticsDashboard = () => {
     } = useAnalyticsStore();
 
     // Animation states
-    const [animationPhase, setAnimationPhase] = useState(0);
-    const [chartVisible, setChartVisible] = useState(false);
-    const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+    const [animationPhase, setAnimationPhase] = React.useState(0);
 
-    // Hardcoded per spec
-    const selectedPeriod = 'Last 30 days';
-
-    useEffect(() => {
+    React.useEffect(() => {
         startPolling();
         return () => stopPolling();
     }, [startPolling, stopPolling]);
 
     // Trigger staged animations
-    useEffect(() => {
+    React.useEffect(() => {
         if (!loading && metricsData) {
-            setChartVisible(false);
-            setAnimationPhase(0);
-
             // Staggered entrance sequence
+            // We use a small timeout for the reset to avoid synchronous setState warning
+            const resetTimer = setTimeout(() => setAnimationPhase(0), 0);
+            
             const timers = [
                 setTimeout(() => setAnimationPhase(1), 100), // Header
                 setTimeout(() => setAnimationPhase(2), 300), // Cards
                 setTimeout(() => setAnimationPhase(3), 600), // Chart UI
-                setTimeout(() => setChartVisible(true), 1000) // Chart Lines
             ];
 
-            return () => timers.forEach(clearTimeout);
+            return () => {
+                clearTimeout(resetTimer);
+                timers.forEach(clearTimeout);
+            };
         }
     }, [loading, metricsData]);
 
@@ -81,21 +78,6 @@ const DarkAnalyticsDashboard = () => {
 
     // --- Data Prep ---
     const history = metricsData.charts.volumeHistory;
-    const dates = history.map(h => {
-        const d = new Date(h.date);
-        return d.toLocaleString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            hour12: false 
-        });
-    });
-    const volumes = history.map(h => h.volume);
-    const txCounts = history.map(h => h.txCount);
-
-    const maxVolume = Math.max(...volumes) * 1.1 || 100;
-    const maxTxCount = Math.max(...txCounts) * 1.1 || 10;
 
     // Derived 30-day totals
     const totalDeposits = history.reduce((acc, curr) => acc + (curr.depositCount || 0), 0);
@@ -104,52 +86,6 @@ const DarkAnalyticsDashboard = () => {
     const totalWithdrawalVol = history.reduce((acc, curr) => acc + (curr.withdrawalVolume || 0), 0);
     const totalBatches = history.reduce((acc, curr) => acc + (curr.batchCount || 0), 0);
     const totalBatchVol = history.reduce((acc, curr) => acc + (curr.batchVolume || 0), 0);
-
-    // --- Helper for Smooth Bezier Curves ---
-    const generateSmoothPath = (values: number[], maxValue: number, height = 300, isArea = false) => {
-        const width = 800;
-        const padding = 0; // Removing internal padding for cleaner full-width look
-        const chartWidth = width;
-        const chartHeight = height;
-
-        const points = values.map((value, index) => ({
-            x: (values.length > 1 ? index / (values.length - 1) : 0.5) * chartWidth,
-            y: (1 - value / maxValue) * chartHeight
-        }));
-
-        if (points.length < 2) {
-            // Handle single point case to draw at least something flat
-            if (points.length === 1) {
-                const y = points[0].y;
-                if (isArea) {
-                    return `M 0,${y} L ${width},${y} L ${width},${height} L 0,${height} Z`;
-                }
-                return `M 0,${y} L ${width},${y}`;
-            }
-            return '';
-        }
-
-        let path = `M ${points[0].x},${points[0].y}`;
-
-        for (let i = 1; i < points.length; i++) {
-            const prev = points[i - 1];
-            const curr = points[i];
-            const next = points[i + 1];
-
-            const cp1x = prev.x + (curr.x - prev.x) * 0.5;
-            const cp1y = prev.y;
-            const cp2x = curr.x - (next ? (next.x - curr.x) * 0.3 : 0);
-            const cp2y = curr.y;
-
-            path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${curr.x},${curr.y}`;
-        }
-
-        if (isArea) {
-            path += ` L ${width},${height} L 0,${height} Z`;
-        }
-
-        return path;
-    };
 
     // Metrics for Cards
     const metricsCards = [
@@ -236,7 +172,7 @@ const DarkAnalyticsDashboard = () => {
                             <div className="h-4 w-full bg-neutral-800/50 rounded-full overflow-hidden flex mb-3 relative">
                                 <div
                                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-[1500ms] ease-out"
-                                    style={{ width: chartVisible ? `${usdcPercentage}%` : '0%' }}
+                                    style={{ width: `${usdcPercentage}%` }}
                                 />
                                 <div className="h-full flex-1 bg-neutral-700/30" />
                             </div>
@@ -275,195 +211,9 @@ const DarkAnalyticsDashboard = () => {
                         </div>
                     </div>
 
-                    {/* SVG Chart */}
-                    <div className="h-[400px] w-full relative group">
-                        <svg className="w-full h-full overflow-visible" viewBox="0 0 800 400" preserveAspectRatio="none">
-                            {/* Grid Lines */}
-                            {[0, 0.25, 0.5, 0.75, 1].map((pos, i) => (
-                                <line 
-                                    key={i}
-                                    x1="0" 
-                                    y1={400 * pos} 
-                                    x2="800" 
-                                    y2={400 * pos} 
-                                    stroke="rgba(255,255,255,0.03)" 
-                                    strokeWidth="1" 
-                                />
-                            ))}
-
-                            {/* Volume Gradient Definition */}
-                            <defs>
-                                <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-                                </linearGradient>
-                            </defs>
-
-                            {/* Volume Area */}
-                            <path
-                                d={generateSmoothPath(volumes, maxVolume, 400, true)}
-                                fill="url(#volumeGradient)"
-                                className={`transition-all duration-[2000ms] ease-out ${chartVisible ? 'opacity-100' : 'opacity-0'}`}
-                                style={{ transformOrigin: 'bottom' }}
-                            />
-
-                            {/* Transaction Line (Background) */}
-                            <path
-                                d={generateSmoothPath(txCounts, maxTxCount, 400)}
-                                fill="none"
-                                stroke="#525252"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeDasharray="4 4"
-                                className={`transition-all duration-[2000ms] ease-out ${chartVisible ? 'opacity-100' : 'opacity-0'}`}
-                                style={{
-                                    strokeDashoffset: chartVisible ? 0 : 1000,
-                                    transitionDelay: '200ms'
-                                }}
-                            />
-
-                            {/* Volume Line (Foreground) */}
-                            <path
-                                d={generateSmoothPath(volumes, maxVolume, 400)}
-                                fill="none"
-                                stroke="#3b82f6"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                className={`transition-all duration-[2000ms] ease-out ${chartVisible ? 'opacity-100' : 'opacity-0'}`}
-                                style={{
-                                    strokeDasharray: 2500, // Roughly path length
-                                    strokeDashoffset: chartVisible ? 0 : 2500
-                                }}
-                            />
-
-                            {/* Interactive Overlay & Points */}
-                            {dates.map((date, index) => {
-                                const x = (dates.length > 1 ? index / (dates.length - 1) : 0.5) * 800;
-                                const volumeY = (1 - volumes[index] / maxVolume) * 400;
-                                
-                                return (
-                                    <g key={index} className="group/point">
-                                        {/* Invisible Hit Area Bar */}
-                                        <rect 
-                                            x={x - (800 / dates.length / 2)} 
-                                            y="0" 
-                                            width={800 / dates.length} 
-                                            height="400" 
-                                            fill="transparent" 
-                                            onMouseEnter={() => setHoveredPoint(index)}
-                                            onMouseLeave={() => setHoveredPoint(null)}
-                                            className="cursor-crosshair"
-                                        />
-                                        
-                                        {/* Highlight Point (Only visible on hover) */}
-                                        <circle
-                                            cx={x}
-                                            cy={volumeY}
-                                            r="6"
-                                            fill="#000"
-                                            stroke="#3b82f6"
-                                            strokeWidth="3"
-                                            className={`transition-all duration-200 pointer-events-none ${
-                                                hoveredPoint === index ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
-                                            }`}
-                                        />
-                                        
-                                        {/* Vertical Guide Line */}
-                                        <line
-                                            x1={x}
-                                            y1="0"
-                                            x2={x}
-                                            y2="400"
-                                            stroke="rgba(255,255,255,0.1)"
-                                            strokeWidth="1"
-                                            className={`transition-opacity duration-200 pointer-events-none ${
-                                                hoveredPoint === index ? 'opacity-100' : 'opacity-0'
-                                            }`}
-                                        />
-                                    </g>
-                                );
-                            })}
-                        </svg>
-
-                        {/* Floating Tooltip */}
-                        {hoveredPoint !== null && (
-                            <div 
-                                className="absolute top-0 pointer-events-none transition-all duration-75 ease-out z-20"
-                                style={{ 
-                                    left: `${(dates.length > 1 ? hoveredPoint / (dates.length - 1) : 0.5) * 100}%`,
-                                    transform: `translateX(-50%) translateY(-110%)` // Shift up
-                                }}
-                            >
-                                <div className="bg-neutral-900/95 backdrop-blur-xl border border-white/10 p-4 rounded-xl shadow-2xl min-w-[200px]">
-                                    <div className="text-neutral-400 text-xs mb-3 border-b border-white/5 pb-2 font-mono">
-                                        {dates[hoveredPoint]}
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] uppercase tracking-wider text-neutral-500">Volume</span>
-                                            <span className="text-lg font-light text-blue-400">
-                                                {currencyFormatter.format(volumes[hoveredPoint])}
-                                            </span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[10px] uppercase tracking-wider text-neutral-500">Txns</span>
-                                            <span className="text-lg font-light text-white">
-                                                {txCounts[hoveredPoint]}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Detailed Breakdown */}
-                                    <div className="space-y-1.5 pt-2 border-t border-white/5">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/80"></div>
-                                                <span className="text-neutral-400">Deposits</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-neutral-500">{history[hoveredPoint].depositCount || 0}</span>
-                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].depositVolume || 0)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500/80"></div>
-                                                <span className="text-neutral-400">Withdrawals</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-neutral-500">{history[hoveredPoint].withdrawalCount || 0}</span>
-                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].withdrawalVolume || 0)}</span>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center text-xs">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-purple-500/80"></div>
-                                                <span className="text-neutral-400">Batches</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-neutral-500">{history[hoveredPoint].batchCount || 0}</span>
-                                                <span className="text-white font-mono">{currencyFormatter.format(history[hoveredPoint].batchVolume || 0)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* Tooltip Arrow */}
-                                <div className="w-3 h-3 bg-neutral-900 border-r border-b border-white/10 rotate-45 mx-auto -mt-1.5"></div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* X-Axis Labels */}
-                    <div className="flex justify-between mt-4 px-2">
-                        {dates.map((date, i) => (
-                            // Show first, last, and every ~5th label
-                            (i === 0 || i === dates.length - 1 || i % 6 === 0) && (
-                                <span key={i} className="text-xs text-neutral-600 font-mono">
-                                    {date}
-                                </span>
-                            )
-                        ))}
+                    {/* Recharts Component */}
+                    <div className="w-full h-[500px]">
+                        <VolumeChart data={metricsData.charts.volumeHistory} />
                     </div>
                 </div>
 

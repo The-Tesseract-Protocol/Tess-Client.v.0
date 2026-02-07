@@ -232,7 +232,8 @@ function BatchPaymentsContent() {
                 });
             }
 
-        } catch (error: any) {
+        } catch (error:
+            any) {
             console.error('Batch payment error:', error);
             setTxStatus({
                 state: 'error',
