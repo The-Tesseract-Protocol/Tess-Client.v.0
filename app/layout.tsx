@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Tesseract",
-  description: "4D Privacy On 2D Ledger",
+  description: "COMPLIANT CONFIDENTIAL & AUDITABLE INSTITUTIONAL PAYMENTS",
 };
 
 export default function RootLayout({
